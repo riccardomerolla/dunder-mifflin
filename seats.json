@@ -1,19 +1,19 @@
 {
   "$comment": "Per-seat llm4ts connector/model. Schema-decoded at startup; connector must be a known llm4ts connector id. Env overrides: DM_SEAT_<NAME>_CONNECTOR / _MODEL. Cadence: null = reactive (board-driven).",
   "defaults": {
-    "connector": "anthropic",
+    "connector": "claude-cli",
     "model": "claude-sonnet-5",
     "budgetUsdPerCard": 1,
     "cadence": null
   },
   "daemon": {
     "character": "Dwight Schrute",
-    "$comment": "Deterministic — no connector, ever."
+    "$comment": "Deterministic \u2014 no connector, ever."
   },
   "seats": {
     "editor": {
       "character": "Jim Halpert",
-      "connector": "anthropic",
+      "connector": "claude-cli",
       "model": "claude-sonnet-5"
     },
     "ghostwriter": {
@@ -24,7 +24,7 @@
     },
     "social": {
       "character": "Kelly Kapoor",
-      "connector": "anthropic",
+      "connector": "claude-cli",
       "model": "claude-sonnet-5"
     },
     "trendScout": {
@@ -41,7 +41,7 @@
     },
     "analyst": {
       "character": "Oscar Martinez",
-      "connector": "anthropic",
+      "connector": "claude-cli",
       "model": "claude-sonnet-5",
       "cadence": "weekly"
     },
@@ -54,7 +54,12 @@
   },
   "guardrails": {
     "dailyBudgetUsd": 10,
-    "publishCapsPerDay": { "x": 3, "linkedin": 1, "instagram": 1, "blog": 1 }
+    "publishCapsPerDay": {
+      "x": 3,
+      "linkedin": 1,
+      "instagram": 1,
+      "blog": 1
+    }
   },
   "board": {
     "project": "47528834",

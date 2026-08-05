@@ -37,6 +37,10 @@ node --experimental-strip-types src/main.ts        # observe mode
 DM_CLAIM=1 node --experimental-strip-types src/main.ts  # armed
 ```
 
-API seats (Jim, Kelly) need `ANTHROPIC_API_KEY`; CLI seats (Pam) use the
-installed `claude` CLI's own auth, and the blog PR path uses `gh` and
-`basecamp` CLI auth. No secrets ever live in this repo or its config.
+Every seat runs on the `claude` CLI connector, so there is no API key in
+the environment at all: seats use the CLI's own subscription auth, the
+blog PR path uses `gh` auth, and the board uses `basecamp` CLI auth. No
+secrets ever live in this repo or its config. (Any seat can still be
+swapped to an API or other CLI connector in seats.json or via
+`DM_SEAT_<NAME>_CONNECTOR` — note codex does not yet report cost, which
+weakens that seat's budget enforcement.)
