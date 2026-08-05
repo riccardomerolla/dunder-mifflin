@@ -19,4 +19,24 @@ Triage → Ready → Drafting → Review → Approved → Done, Not now parked).
 All intelligence via published `@llm4ts/*` at a pinned release
 (currently 0.8.0, the release that shipped `BasecampTool`).
 
-Implementation status: pre-phase-1 — founding docs only.
+## Status
+
+Phase 1 implemented (pinned llm4ts 0.8.1): Dwight's heartbeat with the
+daily-budget throttle and ledger, Jim's triage (Triage → Ready with a
+brief, or Not now) and fresh-context QA gate (Drafting → Review), Pam's
+blog drafts as PR branches on the blog repo, Kelly's channel-native
+social copy as signed DRAFT-READY comments. Observe mode is the default —
+the daemon logs what it would do; `DM_CLAIM=1` arms it. No publishing:
+cards end at Review for the CEO (Phase 1 trust bar: 5 pieces shipped
+unedited).
+
+```bash
+pnpm install
+pnpm typecheck && pnpm test
+node --experimental-strip-types src/main.ts        # observe mode
+DM_CLAIM=1 node --experimental-strip-types src/main.ts  # armed
+```
+
+API seats (Jim, Kelly) need `ANTHROPIC_API_KEY`; CLI seats (Pam) use the
+installed `claude` CLI's own auth, and the blog PR path uses `gh` and
+`basecamp` CLI auth. No secrets ever live in this repo or its config.

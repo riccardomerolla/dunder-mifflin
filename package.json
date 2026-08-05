@@ -1,0 +1,27 @@
+{
+  "name": "dunder-mifflin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A virtual AI content agency on llm4ts with a Basecamp card table as its control plane",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "typecheck": "tsc -b tsconfig.json --pretty false",
+    "test": "vitest run",
+    "start": "node --experimental-strip-types src/main.ts"
+  },
+  "dependencies": {
+    "@llm4ts/core": "0.8.1",
+    "@llm4ts/flow": "0.8.1",
+    "@llm4ts/runner": "0.8.1",
+    "effect": "^4.0.0-beta.102"
+  },
+  "devDependencies": {
+    "@effect/vitest": "beta",
+    "@types/node": "^22.20.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.0"
+  }
+}
