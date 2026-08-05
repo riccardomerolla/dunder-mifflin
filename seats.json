@@ -1,0 +1,72 @@
+{
+  "$comment": "Per-seat llm4ts connector/model. Schema-decoded at startup; connector must be a known llm4ts connector id. Env overrides: DM_SEAT_<NAME>_CONNECTOR / _MODEL. Cadence: null = reactive (board-driven).",
+  "defaults": {
+    "connector": "anthropic",
+    "model": "claude-sonnet-5",
+    "budgetUsdPerCard": 1,
+    "cadence": null
+  },
+  "daemon": {
+    "character": "Dwight Schrute",
+    "$comment": "Deterministic — no connector, ever."
+  },
+  "seats": {
+    "editor": {
+      "character": "Jim Halpert",
+      "connector": "anthropic",
+      "model": "claude-sonnet-5"
+    },
+    "ghostwriter": {
+      "character": "Pam Beesly",
+      "connector": "claude-cli",
+      "model": "claude-opus-5",
+      "budgetUsdPerCard": 2
+    },
+    "social": {
+      "character": "Kelly Kapoor",
+      "connector": "anthropic",
+      "model": "claude-sonnet-5"
+    },
+    "trendScout": {
+      "character": "Ryan Howard",
+      "connector": "claude-cli",
+      "model": "claude-sonnet-5",
+      "cadence": "daily"
+    },
+    "opportunityScout": {
+      "character": "Michael Scott",
+      "connector": "claude-cli",
+      "model": "claude-opus-5",
+      "cadence": "weekly"
+    },
+    "analyst": {
+      "character": "Oscar Martinez",
+      "connector": "anthropic",
+      "model": "claude-sonnet-5",
+      "cadence": "weekly"
+    },
+    "growthAdvisor": {
+      "character": "Andy Bernard",
+      "connector": "claude-cli",
+      "model": "claude-sonnet-5",
+      "cadence": "weekly"
+    }
+  },
+  "guardrails": {
+    "dailyBudgetUsd": 10,
+    "publishCapsPerDay": { "x": 3, "linkedin": 1, "instagram": 1, "blog": 1 }
+  },
+  "board": {
+    "project": "47528834",
+    "cardTable": "9953815788",
+    "columns": {
+      "triage": "Triage",
+      "ready": "Ready",
+      "drafting": "Drafting",
+      "review": "Review",
+      "approved": "Approved",
+      "done": "Done",
+      "notNow": "Not now"
+    }
+  }
+}
