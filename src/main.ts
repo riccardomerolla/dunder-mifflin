@@ -74,6 +74,15 @@ const beat = (
       )
       return
     }
+    yield* Effect.log(
+      `beat: ${actions
+        .map((action) =>
+          action.kind === "claim" || action.kind === "redraft"
+            ? `${action.kind} #${action.card.id} (${action.seat})`
+            : `${action.kind} #${action.card.id}`
+        )
+        .join(", ")} ($${spent.toFixed(2)} spent today)`
+    )
     for (const action of actions) {
       const card = yield* board.readCard(action.card.id)
       if (action.kind === "triage") {

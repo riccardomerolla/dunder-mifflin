@@ -16,7 +16,7 @@ import {
 import { nodeProcessExecutor } from "@llm4ts/runner/NodeProcessExecutor"
 import { ensureClone, pushPostBranch } from "./Blog.ts"
 import type { BoardShape } from "./Board.ts"
-import { countOfficeCommentsWith, latestOfficeCommentWith, stripSignature } from "./Board.ts"
+import { draftAttemptsSinceBrief, latestOfficeCommentWith, stripSignature } from "./Board.ts"
 import type { AgencyConfig } from "./Config.ts"
 import { LedgerEntry, appendLedger } from "./Ledger.ts"
 import {
@@ -199,7 +199,7 @@ export const runMaker = (
 ): Effect.Effect<void, FlowError> =>
   Effect.gen(function* () {
     const comments = yield* deps.board.comments(card.id)
-    const attempts = countOfficeCommentsWith(comments, draftReadyMarker)
+    const attempts = draftAttemptsSinceBrief(comments)
     if (attempts >= deps.config.maxDraftAttempts) {
       yield* deps.board.commentAs(
         seat === "ghostwriter" ? "Pam" : "Kelly",

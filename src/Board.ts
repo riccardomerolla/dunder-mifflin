@@ -78,14 +78,24 @@ export const latestOfficeCommentWith = (
 export const stripSignature = (text: string): string =>
   text.replace(/\n*— [^\n]*· Dunder Mifflin\s*$/, "").trim()
 
-export const countOfficeCommentsWith = (
-  comments: ReadonlyArray<CardComment>,
-  marker: string
-): number =>
-  comments.filter((comment) => {
+// Draft attempts since the most recent brief: a CEO re-queue through
+// Triage yields a fresh BRIEF from Jim, which resets the cap — without
+// this, a parked card would re-park instantly on revival.
+export const draftAttemptsSinceBrief = (comments: ReadonlyArray<CardComment>): number => {
+  let attempts = 0
+  for (const comment of comments) {
     const text = htmlToText(comment.contentHtml)
-    return isOfficeComment(text) && text.includes(marker)
-  }).length
+    if (!isOfficeComment(text)) {
+      continue
+    }
+    if (text.startsWith("BRIEF:")) {
+      attempts = 0
+    } else if (text.startsWith("DRAFT-READY")) {
+      attempts += 1
+    }
+  }
+  return attempts
+}
 
 export const makeBoard = (
   config: AgencyConfig,
