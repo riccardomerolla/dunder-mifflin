@@ -16,7 +16,7 @@ import {
 import { nodeProcessExecutor } from "@llm4ts/runner/NodeProcessExecutor"
 import { ensureClone, pushPostBranch } from "./Blog.ts"
 import type { BoardShape } from "./Board.ts"
-import { countOfficeCommentsWith, htmlToText, latestOfficeCommentBy } from "./Board.ts"
+import { countOfficeCommentsWith, latestOfficeCommentWith, stripSignature } from "./Board.ts"
 import type { AgencyConfig } from "./Config.ts"
 import { LedgerEntry, appendLedger } from "./Ledger.ts"
 import {
@@ -170,21 +170,25 @@ export const runTriage = (deps: SeatDeps, card: Card): Effect.Effect<void, FlowE
 
 // --- Makers: Pam ([blog]) and Kelly ([x]/[li]/[ig]) ---
 
+// Protocol comments are found by their leading marker, never by which
+// character signed them (a comment may quote another's signature).
 const briefFor = (deps: SeatDeps, cardId: number): Effect.Effect<string, FlowError> =>
   deps.board.comments(cardId).pipe(
     Effect.map((comments) => {
-      const jim = latestOfficeCommentBy(comments, "Jim")
-      const match = jim === undefined ? undefined : /BRIEF:\s*([\s\S]*?)(?:\n—|$)/.exec(jim)
-      return match?.[1]?.trim() ?? "No brief found — use the card itself."
+      const brief = latestOfficeCommentWith(comments, "BRIEF:")
+      return brief === undefined
+        ? "No brief found — use the card itself."
+        : stripSignature(brief).replace(/^BRIEF:\s*/, "")
     })
   )
 
 const findingsFor = (deps: SeatDeps, cardId: number): Effect.Effect<string | undefined, FlowError> =>
   deps.board.comments(cardId).pipe(
     Effect.map((comments) => {
-      const jim = latestOfficeCommentBy(comments, "Jim")
-      const match = jim === undefined ? undefined : /FINDINGS:\s*([\s\S]*?)(?:\n—|$)/.exec(jim)
-      return match?.[1]?.trim()
+      const findings = latestOfficeCommentWith(comments, "FINDINGS:")
+      return findings === undefined
+        ? undefined
+        : stripSignature(findings).replace(/^FINDINGS:\s*/, "")
     })
   )
 
@@ -301,13 +305,13 @@ const runSocial = (
 export const runQa = (deps: SeatDeps, card: Card): Effect.Effect<void, FlowError> =>
   Effect.gen(function* () {
     const comments = yield* deps.board.comments(card.id)
-    const kind = parseKind(card.title)
-    const maker = kind === "blog" ? "Pam" : "Kelly"
-    const draftComment = latestOfficeCommentBy(comments, maker)
-    if (draftComment === undefined || !draftComment.includes(draftReadyMarker)) {
+    const draftComment = latestOfficeCommentWith(comments, draftReadyMarker)
+    if (draftComment === undefined) {
       return
     }
-    const draft = htmlToText(draftComment).replace(draftReadyMarker, "").trim()
+    // Strip the marker AND the trailing agent signature: what QA judges
+    // is exactly what would be published.
+    const draft = stripSignature(draftComment).replace(draftReadyMarker, "").trim()
     const handbook = yield* readHandbook(process.cwd())
     const { reply, costUsd } = yield* askSeat(
       deps,

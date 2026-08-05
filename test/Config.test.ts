@@ -73,6 +73,10 @@ describe("agency config", () => {
       assert.strictEqual(editor?._tag, "ApiConnectorConfig")
       assert.strictEqual(ghostwriter?._tag, "CliConnectorConfig")
       assert.strictEqual(ghostwriter?.model, "claude-opus-5")
+      // Seats are chat-only judgment roles; the daemon does all writes.
+      // CLI seats must run in their harness's read-only mode so a
+      // prompt-injected card can never make a seat write or execute.
+      assert.isTrue(ghostwriter?._tag === "CliConnectorConfig" && ghostwriter.readOnly)
     })
   )
 })

@@ -45,17 +45,33 @@ describe("heartbeat decisions (pure)", () => {
     )
   })
 
-  it("sends drafted cards to QA and skips undrafted ones", () => {
+  it("sends drafted cards to QA and bounced ones back to their maker", () => {
     const actions = decide(
       {
         ...empty,
-        drafting: [card(20, "[x] Drafted", "DRAFT-READY"), card(21, "[blog] Still working")]
+        drafting: [
+          card(20, "[x] Drafted", "DRAFT-READY\nthe copy"),
+          // QA failed it: latest office comment is Jim's FINDINGS —
+          // the maker redrafts, QA does not re-run on the same draft.
+          card(21, "[x] Bounced", 'FINDINGS:\n- signed copy\nquoting "DRAFT-READY" is fine'),
+          // Claimed but the maker produced nothing parseable yet.
+          card(22, "[blog] Still working")
+        ]
       },
       { budgetLeftUsd: 10, triagePerBeat: 3 }
     )
     assert.deepStrictEqual(
-      actions.map((action) => action.kind),
-      ["qa"]
+      actions.map((action) => [action.kind, action.card.id]),
+      [
+        ["qa", 20],
+        ["redraft", 21],
+        ["redraft", 22]
+      ]
+    )
+    const redrafts = actions.filter((action) => action.kind === "redraft")
+    assert.deepStrictEqual(
+      redrafts.map((action) => (action.kind === "redraft" ? action.seat : "")),
+      ["social", "ghostwriter"]
     )
   })
 

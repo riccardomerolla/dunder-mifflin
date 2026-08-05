@@ -4,13 +4,11 @@ import * as Effect from "effect/Effect"
 import * as Schedule from "effect/Schedule"
 import type { FlowEventsShape } from "@llm4ts/flow/FlowEvents"
 import { nodeProcessExecutor } from "@llm4ts/runner/NodeProcessExecutor"
-import { makeBoard, type BoardShape } from "./Board.ts"
+import { latestOfficeComment, makeBoard, type BoardShape } from "./Board.ts"
 import { loadConfig, type AgencyConfig } from "./Config.ts"
 import { decide, type BoardSnapshot } from "./Heartbeat.ts"
 import { readLedger, spentToday } from "./Ledger.ts"
-import { latestOfficeCommentBy } from "./Board.ts"
 import { runMaker, runQa, runTriage, type SeatDeps } from "./Seats.ts"
-import { parseKind } from "./Protocol.ts"
 
 // Dwight, the Chief of Staff: decode config, then run the idempotent
 // heartbeat forever. Observe mode is the default — the office reports
@@ -32,12 +30,11 @@ const snapshotOf = (board: BoardShape): Effect.Effect<BoardSnapshot, unknown> =>
     // fetching comments per card is fine at content-office volume.
     const draftingWithMarkers = yield* Effect.forEach(drafting, (card) =>
       board.comments(card.id).pipe(
-        Effect.map((comments) => {
-          const kind = parseKind(card.title)
-          const maker = kind === "blog" ? "Pam" : "Kelly"
-          const marker = latestOfficeCommentBy(comments, maker)
-          return { id: card.id, title: card.title, latestOfficeMarker: marker }
-        })
+        Effect.map((comments) => ({
+          id: card.id,
+          title: card.title,
+          latestOfficeMarker: latestOfficeComment(comments)
+        }))
       )
     )
     return {
@@ -83,6 +80,8 @@ const beat = (
         yield* runTriage(deps, card)
       } else if (action.kind === "claim") {
         yield* board.moveTo(card.id, "drafting")
+        yield* runMaker(deps, action.seat, card)
+      } else if (action.kind === "redraft") {
         yield* runMaker(deps, action.seat, card)
       } else {
         yield* runQa(deps, card)

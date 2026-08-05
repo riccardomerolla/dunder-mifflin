@@ -24,6 +24,7 @@ export type BeatAction =
   | { readonly kind: "triage"; readonly card: SnapshotCard }
   | { readonly kind: "claim"; readonly seat: MakerSeat; readonly card: SnapshotCard }
   | { readonly kind: "qa"; readonly card: SnapshotCard }
+  | { readonly kind: "redraft"; readonly seat: MakerSeat; readonly card: SnapshotCard }
 
 export const decide = (
   snapshot: BoardSnapshot,
@@ -55,13 +56,20 @@ export const decide = (
     }
   }
 
+  // A Drafting card's state is the latest office comment's LEADING
+  // marker: a finished draft goes to QA; a QA bounce (FINDINGS) or a
+  // maker that produced nothing parseable goes back to its maker. QA
+  // never re-runs on a draft it already failed.
   for (const card of snapshot.drafting) {
-    if (
-      parseKind(card.title) !== undefined &&
-      card.latestOfficeMarker !== undefined &&
-      card.latestOfficeMarker.includes(draftReadyMarker)
-    ) {
+    const kind = parseKind(card.title)
+    const seat = kind === undefined ? undefined : makerSeatFor(kind)
+    if (seat === undefined) {
+      continue
+    }
+    if (card.latestOfficeMarker?.startsWith(draftReadyMarker)) {
       actions.push({ kind: "qa", card })
+    } else {
+      actions.push({ kind: "redraft", seat, card })
     }
   }
 

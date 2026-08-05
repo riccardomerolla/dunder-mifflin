@@ -46,18 +46,37 @@ export const htmlToText = (html: string): string =>
     .replace(/&nbsp;/g, " ")
     .trim()
 
-export const latestOfficeCommentBy = (
-  comments: ReadonlyArray<CardComment>,
-  character: string
+// Retrieval is by MARKER, never by character: a comment quoting another
+// character's signature (Jim citing "— Kelly · Dunder Mifflin" in a QA
+// finding) must not be misattributed. Signatures are audit trail only.
+export const latestOfficeComment = (
+  comments: ReadonlyArray<CardComment>
 ): string | undefined => {
   for (let index = comments.length - 1; index >= 0; index -= 1) {
     const text = htmlToText(comments[index]?.contentHtml ?? "")
-    if (isOfficeComment(text) && text.includes(`— ${character}`)) {
+    if (isOfficeComment(text)) {
       return text
     }
   }
   return undefined
 }
+
+export const latestOfficeCommentWith = (
+  comments: ReadonlyArray<CardComment>,
+  marker: string
+): string | undefined => {
+  for (let index = comments.length - 1; index >= 0; index -= 1) {
+    const text = htmlToText(comments[index]?.contentHtml ?? "")
+    if (isOfficeComment(text) && text.startsWith(marker)) {
+      return text
+    }
+  }
+  return undefined
+}
+
+// The signature commentAs appends must never leak into published copy.
+export const stripSignature = (text: string): string =>
+  text.replace(/\n*— [^\n]*· Dunder Mifflin\s*$/, "").trim()
 
 export const countOfficeCommentsWith = (
   comments: ReadonlyArray<CardComment>,

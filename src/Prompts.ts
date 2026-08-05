@@ -217,7 +217,10 @@ export const socialPrompt = (
     "",
     "<<<COPY",
     "<the copy, ready to paste>",
-    "COPY>>>"
+    "COPY>>>",
+    "",
+    "The copy publishes under the CEO's own account: never sign it, never",
+    "mention the agency or any character name inside the COPY block."
   ].join("\n")
 
 export const draftReadyComment = (summary: string): string =>

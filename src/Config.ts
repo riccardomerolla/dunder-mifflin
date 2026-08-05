@@ -107,9 +107,14 @@ export class AgencyConfig extends Schema.Class<AgencyConfig>("AgencyConfig")({
       return undefined
     }
     const connectorId = ConnectorId.make({ value: seat.connector })
+    // Every seat is a chat-only judgment role — the daemon performs all
+    // writes deterministically — so CLI seats run in their harness's
+    // read-only mode: a prompt-injected card can never make a seat write
+    // files or execute mutating commands.
     return cliConnectorValues.includes(seat.connector)
       ? CliConnectorConfig.make({
           connectorId,
+          readOnly: true,
           ...(seat.model === undefined ? {} : { model: seat.model })
         })
       : ApiConnectorConfig.make({
