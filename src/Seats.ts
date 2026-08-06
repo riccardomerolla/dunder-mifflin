@@ -497,13 +497,14 @@ export const runQa = (deps: SeatDeps, card: Card): Effect.Effect<void, FlowError
     const kind = parseKind(card.title) ?? "all"
     const context = yield* memoryContext(deps, "qa", kind)
     const workLog = yield* ensureWorkLog(deps, card.id)
+    const brief = yield* briefFor(deps, card.id)
     const startMs = yield* Clock.currentTimeMillis
     const { reply, costUsd } = yield* askSeat(
       deps,
       "editor",
       "editor-qa",
       handbook,
-      qaPrompt(handbook, card, draft, context),
+      qaPrompt(handbook, card, draft, context, brief),
       workLog === undefined ? undefined : liveTrace(deps, workLog, "🔎 Jim in QA")
     )
     const doneMs = yield* Clock.currentTimeMillis

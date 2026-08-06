@@ -98,7 +98,8 @@ export const qaPrompt = (
   handbook: string,
   card: Card,
   draft: string,
-  context?: string
+  context?: string,
+  brief?: string
 ): string =>
   [
     "You are Jim Halpert doing a fresh-context editorial QA pass for",
@@ -111,8 +112,13 @@ export const qaPrompt = (
     handbook,
     ...(context === undefined ? [] : ["", context]),
     "",
+    // The card body and brief ARE the provenance sources — QA once
+    // failed a correct URL because it saw only the title and concluded
+    // the link was quoted from nowhere.
     "## Card",
     `Title: ${card.title}`,
+    `Content (rich-text HTML):\n${card.contentHtml}`,
+    ...(brief === undefined ? [] : ["", "## Brief the maker worked from", brief]),
     "",
     "## Draft",
     draft,
