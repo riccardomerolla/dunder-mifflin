@@ -113,12 +113,16 @@ export class AgencyConfig extends Schema.Class<AgencyConfig>("AgencyConfig")({
     // files or execute mutating commands.
     // turnLimit is the in-flight bound: the cost budget is only checked
     // after a run completes, so without it a seat can research forever
-    // (a 90-minute Pam spiral proved it).
+    // (a 90-minute Pam spiral proved it). llm4ts does not yet map
+    // turnLimit onto claude-cli argv, so the flags passthrough carries
+    // the real cap as --max-turns; turnLimit stays set for the day the
+    // connector honors it.
     return cliConnectorValues.includes(seat.connector)
       ? CliConnectorConfig.make({
           connectorId,
           readOnly: true,
           turnLimit: 40,
+          flags: { "max-turns": "40" },
           ...(seat.model === undefined ? {} : { model: seat.model })
         })
       : ApiConnectorConfig.make({

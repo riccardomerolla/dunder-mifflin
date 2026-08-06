@@ -78,8 +78,13 @@ describe("agency config", () => {
       // prompt-injected card can never make a seat write or execute.
       assert.isTrue(ghostwriter?._tag === "CliConnectorConfig" && ghostwriter.readOnly)
       // Budget checks fire only after a run completes; the turn limit is
-      // the in-flight bound that stops a research spiral.
+      // the in-flight bound that stops a research spiral. llm4ts's
+      // turnLimit field is not mapped to claude-cli argv (spec filed), so
+      // the cap rides the flags passthrough as --max-turns.
       assert.isTrue(ghostwriter?._tag === "CliConnectorConfig" && ghostwriter.turnLimit === 40)
+      assert.isTrue(
+        ghostwriter?._tag === "CliConnectorConfig" && ghostwriter.flags["max-turns"] === "40"
+      )
     })
   )
 })
