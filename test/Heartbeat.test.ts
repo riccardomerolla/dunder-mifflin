@@ -16,7 +16,7 @@ describe("heartbeat decisions (pure)", () => {
         ...empty,
         triage: [card(1, "[blog] A"), card(2, "[x] B"), card(3, "[li] C"), card(4, "[blog] D")]
       },
-      { budgetLeftUsd: 10, triagePerBeat: 3 }
+      { triagePerBeat: 3 }
     )
     const triages = actions.filter((action) => action.kind === "triage")
     assert.strictEqual(triages.length, 3)
@@ -33,7 +33,7 @@ describe("heartbeat decisions (pure)", () => {
           card(13, "[digest] Info only")
         ]
       },
-      { budgetLeftUsd: 10, triagePerBeat: 3 }
+      { triagePerBeat: 3 }
     )
     const claims = actions.filter((action) => action.kind === "claim")
     assert.deepStrictEqual(
@@ -58,7 +58,7 @@ describe("heartbeat decisions (pure)", () => {
           card(22, "[blog] Still working")
         ]
       },
-      { budgetLeftUsd: 10, triagePerBeat: 3 }
+      { triagePerBeat: 3 }
     )
     assert.deepStrictEqual(
       actions.map((action) => [action.kind, action.card.id]),
@@ -75,22 +75,13 @@ describe("heartbeat decisions (pure)", () => {
     )
   })
 
-  it("does nothing when the daily budget is exhausted", () => {
-    const actions = decide(
-      {
-        triage: [card(1, "[blog] A")],
-        ready: [card(2, "[x] B")],
-        drafting: [card(3, "[li] C", "DRAFT-READY")]
-      },
-      { budgetLeftUsd: 0, triagePerBeat: 3 }
-    )
-    assert.deepStrictEqual(actions, [])
-  })
+  // Cost is telemetry, never a gate (CEO decision 2026-08-06): no
+  // budget-exhausted case — the office works regardless of spend.
 
   it("ignores unprefixed cards everywhere", () => {
     const actions = decide(
       { triage: [card(1, "free-form CEO note")], ready: [card(2, "another")], drafting: [] },
-      { budgetLeftUsd: 10, triagePerBeat: 3 }
+      { triagePerBeat: 3 }
     )
     assert.deepStrictEqual(actions, [])
   })

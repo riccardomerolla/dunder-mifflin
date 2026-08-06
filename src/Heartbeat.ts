@@ -15,8 +15,10 @@ export interface BoardSnapshot {
   readonly drafting: ReadonlyArray<SnapshotCard>
 }
 
+// Cost is telemetry, never a gate (CEO decision 2026-08-06): the ledger
+// records spend, the work log and beat lines report it, nothing blocks
+// on it. The in-flight bound is the seats' turn cap.
 export interface DecideOptions {
-  readonly budgetLeftUsd: number
   readonly triagePerBeat: number
 }
 
@@ -30,9 +32,6 @@ export const decide = (
   snapshot: BoardSnapshot,
   options: DecideOptions
 ): ReadonlyArray<BeatAction> => {
-  if (options.budgetLeftUsd <= 0) {
-    return []
-  }
   const actions: Array<BeatAction> = []
 
   for (const card of snapshot.triage.slice()) {

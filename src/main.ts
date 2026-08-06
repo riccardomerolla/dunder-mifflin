@@ -54,10 +54,7 @@ const beat = (
     const entries = yield* readLedger(config.workspaceDir)
     const spent = spentToday(entries, new Date(nowMs).toISOString())
     const snapshot = yield* snapshotOf(board)
-    const actions = decide(snapshot, {
-      budgetLeftUsd: config.guardrails.dailyBudgetUsd - spent,
-      triagePerBeat: config.triagePerBeat
-    })
+    const actions = decide(snapshot, { triagePerBeat: config.triagePerBeat })
     if (actions.length === 0) {
       yield* Effect.log(`beat: quiet board ($${spent.toFixed(2)} spent today)`)
       return
@@ -109,7 +106,7 @@ const program = Effect.gen(function* () {
   }
   yield* Effect.log(
     `Dunder Mifflin up: board ${config.board.project}, heartbeat ${config.heartbeatSeconds}s, ` +
-      `$${config.guardrails.dailyBudgetUsd}/day, ${config.claimMode ? "CLAIM" : "observe"} mode`
+      `cost tracked, no caps, ${config.claimMode ? "CLAIM" : "observe"} mode`
   )
   yield* beat(config, board, deps).pipe(
     // A failed beat (basecamp CLI missing, network down) is reported and

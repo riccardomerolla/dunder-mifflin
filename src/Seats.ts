@@ -5,7 +5,7 @@ import * as Ref from "effect/Ref"
 import type * as Scope from "effect/Scope"
 import * as Stream from "effect/Stream"
 import { makeChat } from "@llm4ts/flow/Chat"
-import { CostBudget, type CostCell } from "@llm4ts/flow/CostLedger"
+import type { CostCell } from "@llm4ts/flow/CostLedger"
 import type { Card, CardComment } from "@llm4ts/flow/BasecampTool"
 import type { FlowError } from "@llm4ts/flow/FlowError"
 import type { FlowEventHub, FlowEventsShape } from "@llm4ts/flow/FlowEvents"
@@ -83,6 +83,9 @@ const askSeat = (
       return { reply: undefined, costUsd: 0 }
     }
     const startedAtMs = yield* Clock.currentTimeMillis
+    // Cost is tracked (ledger, work log, invoice lines) but never
+    // enforced: no CostBudget — a run that overshoots is a line item for
+    // Oscar, not a failed flow. The turn cap bounds runaway runs.
     const options = {
       workDir: process.cwd(),
       workspace: process.cwd(),
@@ -90,7 +93,6 @@ const askSeat = (
       coder: connector,
       reasoning: connector,
       runId: `dm-${agent}-${startedAtMs}`,
-      budget: CostBudget.make({ maximumCostUsd: seat.budgetUsdPerCard }),
       environment: deps.environment
     }
     const replyRef = yield* Ref.make<string | undefined>(undefined)
