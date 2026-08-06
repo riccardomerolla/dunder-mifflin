@@ -174,17 +174,15 @@ const shipTweet = (
       )
     )
     if (!posted.ok) {
-      // The API's answer belongs on the card, once — not swallowed into
-      // the daemon log while the beat retries forever.
+      // The API's answer belongs on the card, once PER DISTINCT error —
+      // deduping on the generic phrase once hid a new failure behind a
+      // stale 401 note.
+      const note = `🚚 Darryl: the X API rejected the post — ${posted.detail.slice(0, 200)}`
       const already = comments.some((comment) =>
-        htmlToText(comment.contentHtml).includes("the X API rejected the post")
+        htmlToText(comment.contentHtml).includes(note.slice(0, 120))
       )
       if (!already) {
-        yield* deps.board.commentAs(
-          "Dwight",
-          card.id,
-          `🚚 Darryl: the X API rejected the post — ${posted.detail.slice(0, 200)}`
-        )
+        yield* deps.board.commentAs("Dwight", card.id, note)
       }
       return
     }
