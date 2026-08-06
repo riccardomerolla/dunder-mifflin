@@ -85,6 +85,13 @@ describe("agency config", () => {
       assert.isTrue(
         ghostwriter?._tag === "CliConnectorConfig" && ghostwriter.flags["max-turns"] === "40"
       )
+      // CEO decision 2026-08-06: WebFetch is allowed for every seat —
+      // headless permission mode auto-denies it otherwise, which
+      // deadlocked Kelly on a URL she was told to verify.
+      assert.isTrue(
+        ghostwriter?._tag === "CliConnectorConfig" &&
+          ghostwriter.flags["allowed-tools"] === "WebFetch"
+      )
     })
   )
 })

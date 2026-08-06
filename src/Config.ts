@@ -117,12 +117,17 @@ export class AgencyConfig extends Schema.Class<AgencyConfig>("AgencyConfig")({
     // turnLimit onto claude-cli argv, so the flags passthrough carries
     // the real cap as --max-turns; turnLimit stays set for the day the
     // connector honors it.
+    // "allowed-tools" WebFetch: headless permission mode auto-denies
+    // every approval-gated tool, which left seats unable to check any
+    // URL (the Kelly deadlock). CEO decision: all seats may fetch the
+    // web. Writes stay disallowed via readOnly; Dwight still
+    // fetch-verifies links at ship time regardless of what seats saw.
     return cliConnectorValues.includes(seat.connector)
       ? CliConnectorConfig.make({
           connectorId,
           readOnly: true,
           turnLimit: 40,
-          flags: { "max-turns": "40" },
+          flags: { "max-turns": "40", "allowed-tools": "WebFetch" },
           ...(seat.model === undefined ? {} : { model: seat.model })
         })
       : ApiConnectorConfig.make({
