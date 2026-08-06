@@ -1,0 +1,106 @@
+import * as Clock from "effect/Clock"
+import * as Effect from "effect/Effect"
+import type { Card, CardComment } from "@llm4ts/flow/BasecampTool"
+import type { FlowError } from "@llm4ts/flow/FlowError"
+import { makeGitHubTool, parsePullRequestUrl, type PullRequest } from "@llm4ts/flow/GitHubTool"
+import { nodeProcessExecutor } from "@llm4ts/runner/NodeProcessExecutor"
+import { htmlToText, latestOfficeCommentWith } from "./Board.ts"
+import { LedgerEntry, appendLedger, type LedgerEntry as Entry } from "./Ledger.ts"
+import { draftReadyMarker, parseKind } from "./Protocol.ts"
+import type { SeatDeps } from "./Seats.ts"
+import { renderWorkLog, workLogLines, workLogMarker } from "./WorkLog.ts"
+
+// Darryl Philbin, the warehouse: when the CEO moves a card to Approved,
+// Darryl ships it. Deterministic, never an LLM — shipping is a forklift
+// job. Blog cards merge their PR (squash, delete branch) and move to
+// Done; channels without a publisher yet get one honest note and wait.
+
+export const prUrlFromComments = (
+  comments: ReadonlyArray<CardComment>
+): PullRequest | undefined => {
+  const draft = latestOfficeCommentWith(comments, draftReadyMarker)
+  const url = draft === undefined ? undefined : /https?:\/\/\S+\/pull\/\d+/.exec(draft)?.[0]
+  return url === undefined ? undefined : parsePullRequestUrl(url)
+}
+
+// Shipments recorded today (UTC) — the per-day feed cap reads the same
+// durable ledger as everything else.
+export const shippedToday = (entries: ReadonlyArray<Entry>, nowIso: string): number => {
+  const day = nowIso.slice(0, 10)
+  return entries.filter(
+    (entry) =>
+      entry.seat === "publisher" && entry.outcome === "Shipped" && entry.at.slice(0, 10) === day
+  ).length
+}
+
+const advisoryNote = "🚚 Darryl: no publisher for this channel yet"
+
+const freezeShipLine = (
+  deps: SeatDeps,
+  comments: ReadonlyArray<CardComment>,
+  line: string
+): Effect.Effect<void> =>
+  Effect.gen(function* () {
+    for (let index = comments.length - 1; index >= 0; index -= 1) {
+      const comment = comments[index]
+      const text = htmlToText(comment?.contentHtml ?? "")
+      if (comment !== undefined && text.trimStart().startsWith(workLogMarker)) {
+        yield* deps.board
+          .editCommentAs("Dwight", comment.id, renderWorkLog([...workLogLines(text), line]))
+          .pipe(Effect.ignore)
+        return
+      }
+    }
+  })
+
+export const runShip = (deps: SeatDeps, card: Card): Effect.Effect<void, FlowError> =>
+  Effect.gen(function* () {
+    const kind = parseKind(card.title)
+    if (kind === undefined) {
+      return
+    }
+    const comments = yield* deps.board.comments(card.id)
+    if (kind !== "blog") {
+      // One honest note per card; the card waits in Approved for the
+      // channel's publisher (Phase 2) or a manual paste.
+      const already = comments.some((comment) =>
+        htmlToText(comment.contentHtml).includes(advisoryNote)
+      )
+      if (!already) {
+        yield* deps.board.commentAs(
+          "Dwight",
+          card.id,
+          `${advisoryNote} — the [${kind}] copy above is final; paste it manually and move the card to Done, or wait for the channel integration.`
+        )
+      }
+      return
+    }
+    const pr = prUrlFromComments(comments)
+    if (pr === undefined) {
+      yield* deps.board.commentAs(
+        "Dwight",
+        card.id,
+        "🚚 Darryl found no PR link in the DRAFT-READY comment — cannot ship this blog card."
+      )
+      return
+    }
+    const gh = makeGitHubTool(nodeProcessExecutor, process.cwd(), deps.events)
+    yield* gh.mergePr(pr, "squash", true)
+    yield* deps.board.moveTo(card.id, "done")
+    yield* freezeShipLine(
+      deps,
+      comments,
+      `🚚 Darryl shipped · merged ${pr.shortRef} · live on the blog`
+    )
+    const nowMs = yield* Clock.currentTimeMillis
+    yield* appendLedger(
+      deps.config.workspaceDir,
+      LedgerEntry.make({
+        at: new Date(nowMs).toISOString(),
+        seat: "publisher",
+        card: card.id,
+        outcome: "Shipped",
+        costUsd: 0
+      })
+    )
+  })

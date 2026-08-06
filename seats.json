@@ -73,5 +73,9 @@
       "done": "Done",
       "notNow": "Not now"
     }
+  },
+  "warehouse": {
+    "character": "Darryl Philbin",
+    "$comment": "Deterministic \u2014 the warehouse ships Approved cards (blog: PR merge). No connector, ever."
   }
 }

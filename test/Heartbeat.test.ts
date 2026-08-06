@@ -7,7 +7,7 @@ const card = (id: number, title: string, officeMarker?: string) => ({
   latestOfficeMarker: officeMarker
 })
 
-const empty: BoardSnapshot = { triage: [], ready: [], drafting: [] }
+const empty: BoardSnapshot = { triage: [], ready: [], drafting: [], approved: [] }
 
 describe("heartbeat decisions (pure)", () => {
   it("triages Triage cards first, bounded per beat", () => {
@@ -78,9 +78,31 @@ describe("heartbeat decisions (pure)", () => {
   // Cost is telemetry, never a gate (CEO decision 2026-08-06): no
   // budget-exhausted case — the office works regardless of spend.
 
+  it("ships every prefixed card the CEO moved to Approved", () => {
+    const actions = decide(
+      {
+        ...empty,
+        approved: [card(30, "[blog] Introducing llm4ts"), card(31, "[x] Thread"), card(32, "note")]
+      },
+      { triagePerBeat: 3 }
+    )
+    assert.deepStrictEqual(
+      actions.map((action) => [action.kind, action.card.id]),
+      [
+        ["ship", 30],
+        ["ship", 31]
+      ]
+    )
+  })
+
   it("ignores unprefixed cards everywhere", () => {
     const actions = decide(
-      { triage: [card(1, "free-form CEO note")], ready: [card(2, "another")], drafting: [] },
+      {
+        triage: [card(1, "free-form CEO note")],
+        ready: [card(2, "another")],
+        drafting: [],
+        approved: [card(3, "unprefixed approved")]
+      },
       { triagePerBeat: 3 }
     )
     assert.deepStrictEqual(actions, [])

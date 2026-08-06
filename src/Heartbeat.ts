@@ -13,6 +13,7 @@ export interface BoardSnapshot {
   readonly triage: ReadonlyArray<SnapshotCard>
   readonly ready: ReadonlyArray<SnapshotCard>
   readonly drafting: ReadonlyArray<SnapshotCard>
+  readonly approved: ReadonlyArray<SnapshotCard>
 }
 
 // Cost is telemetry, never a gate (CEO decision 2026-08-06): the ledger
@@ -27,12 +28,21 @@ export type BeatAction =
   | { readonly kind: "claim"; readonly seat: MakerSeat; readonly card: SnapshotCard }
   | { readonly kind: "qa"; readonly card: SnapshotCard }
   | { readonly kind: "redraft"; readonly seat: MakerSeat; readonly card: SnapshotCard }
+  | { readonly kind: "ship"; readonly card: SnapshotCard }
 
 export const decide = (
   snapshot: BoardSnapshot,
   options: DecideOptions
 ): ReadonlyArray<BeatAction> => {
   const actions: Array<BeatAction> = []
+
+  // Approved is the CEO's click: every prefixed card there ships first —
+  // nothing else the office does matters more than delivering.
+  for (const card of snapshot.approved) {
+    if (parseKind(card.title) !== undefined) {
+      actions.push({ kind: "ship", card })
+    }
+  }
 
   for (const card of snapshot.triage.slice()) {
     if (actions.filter((action) => action.kind === "triage").length >= options.triagePerBeat) {

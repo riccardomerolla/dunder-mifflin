@@ -8,6 +8,8 @@ import { latestOfficeComment, makeBoard, type BoardShape } from "./Board.ts"
 import { loadConfig, type AgencyConfig } from "./Config.ts"
 import { decide, type BoardSnapshot } from "./Heartbeat.ts"
 import { readLedger, spentToday } from "./Ledger.ts"
+import { runShip, shippedToday } from "./Publisher.ts"
+import { parseKind } from "./Protocol.ts"
 import { runMaker, runQa, runTriage, type SeatDeps } from "./Seats.ts"
 
 // Dwight, the Chief of Staff: decode config, then run the idempotent
@@ -21,10 +23,11 @@ const loggingEvents: FlowEventsShape = {
 
 const snapshotOf = (board: BoardShape): Effect.Effect<BoardSnapshot, unknown> =>
   Effect.gen(function* () {
-    const [triage, ready, drafting] = yield* Effect.all([
+    const [triage, ready, drafting, approved] = yield* Effect.all([
       board.cardsIn("triage"),
       board.cardsIn("ready"),
-      board.cardsIn("drafting")
+      board.cardsIn("drafting"),
+      board.cardsIn("approved")
     ])
     // Only Drafting cards need their latest office marker (for QA gating);
     // fetching comments per card is fine at content-office volume.
@@ -40,7 +43,8 @@ const snapshotOf = (board: BoardShape): Effect.Effect<BoardSnapshot, unknown> =>
     return {
       triage: triage.map((card) => ({ id: card.id, title: card.title })),
       ready: ready.map((card) => ({ id: card.id, title: card.title })),
-      drafting: draftingWithMarkers
+      drafting: draftingWithMarkers,
+      approved: approved.map((card) => ({ id: card.id, title: card.title }))
     }
   })
 
@@ -82,7 +86,16 @@ const beat = (
     )
     for (const action of actions) {
       const card = yield* board.readCard(action.card.id)
-      if (action.kind === "triage") {
+      if (action.kind === "ship") {
+        // The feed cap is not a cost cap: one blog merge per day keeps
+        // the blog's cadence honest; overflow simply waits in Approved.
+        const blogCap = config.guardrails.publishCapsPerDay["blog"] ?? 1
+        if (parseKind(card.title) === "blog" && shippedToday(entries, new Date(nowMs).toISOString()) >= blogCap) {
+          yield* Effect.log(`ship #${card.id} deferred: blog feed cap (${blogCap}/day) reached`)
+        } else {
+          yield* runShip(deps, card)
+        }
+      } else if (action.kind === "triage") {
         yield* runTriage(deps, card)
       } else if (action.kind === "claim") {
         yield* board.moveTo(card.id, "drafting")
