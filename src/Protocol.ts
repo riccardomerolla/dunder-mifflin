@@ -59,3 +59,7 @@ export const makerSeatFor = (kind: CardKind): MakerSeat | undefined => {
 // Machine-readable marker a maker leaves in its signed comment when the
 // draft is complete; Jim's QA pass looks for it.
 export const draftReadyMarker = "DRAFT-READY"
+
+// Marker for an attempt that produced nothing parseable — it counts
+// against the attempt cap like a real draft, because it cost like one.
+export const draftFailedMarker = "DRAFT-FAILED"

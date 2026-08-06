@@ -31,12 +31,13 @@ describe("Darryl, the warehouse", () => {
     assert.isUndefined(prUrlFromComments([comment(1, signed("Jim", "BRIEF: no pr here"))]))
   })
 
-  it("counts today's shipments for the per-channel feed cap", () => {
-    const entry = (at: string): LedgerEntry =>
-      LedgerEntry.make({ at, seat: "publisher", card: 1, outcome: "Shipped", costUsd: 0 })
+  it("counts today's shipments per channel for the feed cap", () => {
+    const entry = (at: string, seat: string): LedgerEntry =>
+      LedgerEntry.make({ at, seat, card: 1, outcome: "Shipped", costUsd: 0 })
     const entries = [
-      entry("2026-08-06T08:00:00.000Z"),
-      entry("2026-08-05T08:00:00.000Z"),
+      entry("2026-08-06T08:00:00.000Z", "publisher:blog"),
+      entry("2026-08-06T09:00:00.000Z", "publisher:x"),
+      entry("2026-08-05T08:00:00.000Z", "publisher:x"),
       LedgerEntry.make({
         at: "2026-08-06T09:00:00.000Z",
         seat: "editor",
@@ -45,7 +46,8 @@ describe("Darryl, the warehouse", () => {
         costUsd: 1
       })
     ]
-    assert.strictEqual(shippedToday(entries, "2026-08-06T12:00:00.000Z"), 1)
-    assert.strictEqual(shippedToday(entries, "2026-08-07T12:00:00.000Z"), 0)
+    assert.strictEqual(shippedToday(entries, "2026-08-06T12:00:00.000Z", "x"), 1)
+    assert.strictEqual(shippedToday(entries, "2026-08-06T12:00:00.000Z", "blog"), 1)
+    assert.strictEqual(shippedToday(entries, "2026-08-07T12:00:00.000Z", "x"), 0)
   })
 })

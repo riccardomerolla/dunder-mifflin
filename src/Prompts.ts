@@ -188,8 +188,10 @@ export const ghostwriterPrompt = (
 
 // --- Kelly: social copy ---
 
+// Tolerant of fences, padded markers, and missing final newlines —
+// three paid retries taught us models bend the frame, not the content.
 export const parseCopy = (reply: string): string | undefined => {
-  const match = /<<<COPY\n([\s\S]*?)\nCOPY>>>/.exec(reply)
+  const match = /<<<\s*COPY\s*\n([\s\S]*?)\n?\s*COPY\s*>>>/.exec(reply)
   const copy = match?.[1]?.trim()
   return copy === undefined || copy.length === 0 ? undefined : copy
 }

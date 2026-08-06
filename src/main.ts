@@ -8,7 +8,7 @@ import { latestOfficeComment, makeBoard, type BoardShape } from "./Board.ts"
 import { loadConfig, type AgencyConfig } from "./Config.ts"
 import { decide, type BoardSnapshot } from "./Heartbeat.ts"
 import { readLedger, spentToday } from "./Ledger.ts"
-import { runShip, shippedToday } from "./Publisher.ts"
+import { channelOf, runShip, shippedToday } from "./Publisher.ts"
 import { parseKind } from "./Protocol.ts"
 import { runMaker, runQa, runTriage, type SeatDeps } from "./Seats.ts"
 
@@ -87,11 +87,12 @@ const beat = (
     for (const action of actions) {
       const card = yield* board.readCard(action.card.id)
       if (action.kind === "ship") {
-        // The feed cap is not a cost cap: one blog merge per day keeps
-        // the blog's cadence honest; overflow simply waits in Approved.
-        const blogCap = config.guardrails.publishCapsPerDay["blog"] ?? 1
-        if (parseKind(card.title) === "blog" && shippedToday(entries, new Date(nowMs).toISOString()) >= blogCap) {
-          yield* Effect.log(`ship #${card.id} deferred: blog feed cap (${blogCap}/day) reached`)
+        // The feed cap is not a cost cap: per-channel posts/day keep the
+        // feeds honest; overflow simply waits in Approved.
+        const channel = channelOf(parseKind(card.title) ?? "")
+        const cap = config.guardrails.publishCapsPerDay[channel] ?? 1
+        if (shippedToday(entries, new Date(nowMs).toISOString(), channel) >= cap) {
+          yield* Effect.log(`ship #${card.id} deferred: ${channel} feed cap (${cap}/day) reached`)
         } else {
           yield* runShip(deps, card)
         }

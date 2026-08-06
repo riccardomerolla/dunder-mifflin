@@ -47,8 +47,13 @@ describe("reply parsers (emphasis- and order-tolerant)", () => {
     )
   })
 
-  it("parses social copy blocks", () => {
+  it("parses social copy blocks, tolerating fences and stray whitespace", () => {
     assert.strictEqual(parseCopy("Intro\n<<<COPY\nShip small.\nCOPY>>>\nOutro"), "Ship small.")
+    // Models wrap markers in code fences, pad them with spaces, or skip
+    // the final newline — three paid Kelly retries taught us to bend.
+    assert.strictEqual(parseCopy("```\n<<<COPY\nShip small.\nCOPY>>>\n```"), "Ship small.")
+    assert.strictEqual(parseCopy("<<< COPY \nShip small.\n COPY >>>"), "Ship small.")
+    assert.strictEqual(parseCopy("<<<COPY\nA thread.\n\n1/ First.\nCOPY>>>"), "A thread.\n\n1/ First.")
     assert.isUndefined(parseCopy("nothing"))
   })
 })

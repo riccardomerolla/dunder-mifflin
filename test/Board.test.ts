@@ -40,6 +40,16 @@ describe("board comment conventions", () => {
       comment(5, signed("Kelly", "Stuck after 2 drafts — parking for the CEO."))
     ]
     assert.strictEqual(draftAttemptsSinceBrief(history), 2)
+    // Unparseable attempts burn money too: DRAFT-FAILED counts, or a
+    // maker retries forever (Kelly, three paid loops, 2026-08-06).
+    assert.strictEqual(
+      draftAttemptsSinceBrief([
+        comment(1, signed("Jim", "BRIEF: angle")),
+        comment(2, signed("Kelly", "DRAFT-FAILED\nno parseable copy")),
+        comment(3, signed("Kelly", "DRAFT-READY\nv1"))
+      ]),
+      2
+    )
     // The CEO re-queues through Triage: Jim's new brief resets the count.
     const revived = [...history, comment(6, signed("Jim", "BRIEF: new angle, fix the link"))]
     assert.strictEqual(draftAttemptsSinceBrief(revived), 0)

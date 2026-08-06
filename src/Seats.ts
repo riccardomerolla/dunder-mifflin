@@ -399,7 +399,11 @@ const runGhostwriter = (
     const runLabel = `🔨 Pam draft #${attempt} · ${durationLabel(doneMs - nowMs)} · $${costUsd.toFixed(2)}`
     const post = reply === undefined ? undefined : parsePost(reply)
     if (post === undefined) {
-      yield* deps.board.commentAs("Pam", card.id, "Draft attempt produced no parseable post; retrying next beat.")
+      yield* deps.board.commentAs(
+        "Pam",
+        card.id,
+        `DRAFT-FAILED\n\nNo parseable post in the reply. Reply head:\n${(reply ?? "(no reply)").slice(0, 400)}`
+      )
       yield* freezeWorkLog(deps, workLog, `${runLabel} · no parseable post`)
       yield* record(deps, "ghostwriter", card, "Failed", costUsd)
       return
@@ -463,7 +467,11 @@ const runSocial = (
     const runLabel = `🔨 Kelly draft #${attempt} · ${durationLabel(doneMs - startMs)} · $${costUsd.toFixed(2)}`
     const copy = reply === undefined ? undefined : parseCopy(reply)
     if (copy === undefined) {
-      yield* deps.board.commentAs("Kelly", card.id, "Draft attempt produced no parseable copy; retrying next beat.")
+      yield* deps.board.commentAs(
+        "Kelly",
+        card.id,
+        `DRAFT-FAILED\n\nNo parseable copy in the reply. Reply head:\n${(reply ?? "(no reply)").slice(0, 400)}`
+      )
       yield* freezeWorkLog(deps, workLog, `${runLabel} · no parseable copy`)
       yield* record(deps, "social", card, "Failed", costUsd)
       return

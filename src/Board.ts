@@ -104,7 +104,7 @@ export const draftAttemptsSinceBrief = (comments: ReadonlyArray<CardComment>): n
     }
     if (text.startsWith("BRIEF:")) {
       attempts = 0
-    } else if (text.startsWith("DRAFT-READY")) {
+    } else if (text.startsWith("DRAFT-READY") || text.startsWith("DRAFT-FAILED")) {
       attempts += 1
     }
   }
