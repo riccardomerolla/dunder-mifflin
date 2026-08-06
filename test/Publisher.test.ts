@@ -1,7 +1,7 @@
 import { assert, describe, it } from "@effect/vitest"
 import { CardComment } from "@llm4ts/flow/BasecampTool"
 import { LedgerEntry } from "../src/Ledger.ts"
-import { prUrlFromComments, shippedToday } from "../src/Publisher.ts"
+import { extractUrls, prUrlFromComments, shippedToday } from "../src/Publisher.ts"
 import { signed } from "../src/Protocol.ts"
 
 const comment = (id: number, text: string): CardComment =>
@@ -29,6 +29,19 @@ describe("Darryl, the warehouse", () => {
     assert.strictEqual(pr?.number, 1)
     assert.strictEqual(pr?.repo, "riccardomerolla.github.io")
     assert.isUndefined(prUrlFromComments([comment(1, signed("Jim", "BRIEF: no pr here"))]))
+  })
+
+  it("extracts outbound links from copy for ship-time verification", () => {
+    assert.deepStrictEqual(
+      extractUrls(
+        "Read it: https://riccardomerolla.github.io/2026/08/06/introducing-llm4ts.html and https://github.com/riccardomerolla/llm4ts.\nNo dupes: https://github.com/riccardomerolla/llm4ts"
+      ),
+      [
+        "https://riccardomerolla.github.io/2026/08/06/introducing-llm4ts.html",
+        "https://github.com/riccardomerolla/llm4ts"
+      ]
+    )
+    assert.deepStrictEqual(extractUrls("no links here"), [])
   })
 
   it("counts today's shipments per channel for the feed cap", () => {

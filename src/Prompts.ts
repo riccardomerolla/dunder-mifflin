@@ -124,7 +124,10 @@ export const qaPrompt = (
     "FINDINGS:",
     "- <each concrete, fixable finding on its own line>",
     "",
-    "PASS means you would put this in front of the CEO unedited."
+    "PASS means you would put this in front of the CEO unedited.",
+    "Judge URLs by provenance (quoted from the card/brief/PR?), not by",
+    "fetching them — link liveness is verified deterministically at ship",
+    "time; do not FAIL a draft for being unverifiable from a sandbox."
   ].join("\n")
 
 // --- Pam: blog post ---
@@ -234,7 +237,11 @@ export const socialPrompt = (
     "COPY>>>",
     "",
     "The copy publishes under the CEO's own account: never sign it, never",
-    "mention the agency or any character name inside the COPY block."
+    "mention the agency or any character name inside the COPY block.",
+    "",
+    "URLs: quote them from the card, brief, or PR — never invent or",
+    "pattern-guess a path. Do NOT try to fetch or verify links yourself;",
+    "link liveness is verified deterministically at ship time."
   ].join("\n")
 
 export const draftReadyComment = (summary: string): string =>

@@ -56,6 +56,25 @@ export const channelOf = (kind: string): string => {
   }
 }
 
+// URL liveness is a forklift job: seats quote links, Dwight fetches
+// them at ship time and blocks the ship on anything but 2xx/3xx.
+export const extractUrls = (copy: string): ReadonlyArray<string> => {
+  const found = copy.match(/https?:\/\/[^\s)"'<>]+/g) ?? []
+  const cleaned = found.map((url) => url.replace(/[.,;:!?]+$/, ""))
+  return [...new Set(cleaned)]
+}
+
+const verifyUrls = (copy: string): Effect.Effect<ReadonlyArray<string>> =>
+  Effect.forEach(extractUrls(copy), (url) =>
+    Effect.tryPromise({
+      try: async () => {
+        const response = await fetch(url, { method: "GET", redirect: "follow" })
+        return response.status < 400 ? undefined : url
+      },
+      catch: () => url
+    }).pipe(Effect.catch(() => Effect.succeed(url)))
+  ).pipe(Effect.map((results) => results.filter((url): url is string => url !== undefined)))
+
 const advisoryNote = "🚚 Darryl: no publisher for this channel yet"
 
 const freezeShipLine = (
@@ -127,6 +146,15 @@ const shipTweet = (
       return
     }
     const copy = stripSignature(draft).replace(draftReadyMarker, "").trim()
+    const dead = yield* verifyUrls(copy)
+    if (dead.length > 0) {
+      yield* deps.board.commentAs(
+        "Dwight",
+        card.id,
+        `🚚 Darryl: link check failed before posting — ${dead.join(", ")} did not return 2xx/3xx. Fix the copy or the page, then re-approve.`
+      )
+      return
+    }
     const tweets = splitTweets(copy)
     if (tweets === undefined) {
       yield* deps.board.commentAs(
