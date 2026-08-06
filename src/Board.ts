@@ -92,10 +92,12 @@ export const latestOfficeCommentWith = (
 export const stripSignature = (text: string): string =>
   text.replace(/\n*— [^\n]*· Dunder Mifflin\s*$/, "").trim()
 
-// Draft attempts since the most recent brief OR park: a fresh BRIEF
-// (re-triage) resets the cap, and so does a park comment — any activity
-// after a park means a human deliberately revived the card, and dragging
-// it straight to Ready must not insta-park it against old attempts.
+// The attempt cap guards ONE unattended maker↔QA cycle. Drafts
+// (DRAFT-READY/DRAFT-FAILED) count; QA findings are mid-cycle; the
+// ambient WORK-LOG is invisible; and ANY other office comment — a
+// brief, a park, a QA pass, a Darryl ship-bounce — ends the cycle and
+// resets the count. A CEO sending a card back always gets fresh
+// attempts (CEO decision 2026-08-06 after a revival insta-parked).
 export const draftAttemptsSinceBrief = (comments: ReadonlyArray<CardComment>): number => {
   let attempts = 0
   for (const comment of comments) {
@@ -103,10 +105,10 @@ export const draftAttemptsSinceBrief = (comments: ReadonlyArray<CardComment>): n
     if (!isOfficeComment(text)) {
       continue
     }
-    if (text.startsWith("BRIEF:") || text.startsWith("Stuck after")) {
-      attempts = 0
-    } else if (text.startsWith("DRAFT-READY") || text.startsWith("DRAFT-FAILED")) {
+    if (text.startsWith("DRAFT-READY") || text.startsWith("DRAFT-FAILED")) {
       attempts += 1
+    } else if (!text.startsWith("FINDINGS:") && !text.trimStart().startsWith("WORK-LOG")) {
+      attempts = 0
     }
   }
   return attempts

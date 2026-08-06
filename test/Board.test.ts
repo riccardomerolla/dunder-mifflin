@@ -63,6 +63,23 @@ describe("board comment conventions", () => {
       comment(6, signed("Kelly", "DRAFT-READY\nv3"))
     ]
     assert.strictEqual(draftAttemptsSinceBrief(parked), 1)
+    // The cap guards a single unattended maker↔QA cycle. ANY other
+    // office comment — a QA pass, a Darryl ship-bounce — ends the cycle
+    // and resets the count: a CEO sending a card back always gets fresh
+    // attempts (live incident: post-QA-pass revival insta-parked).
+    const afterQaPass = [
+      ...history.slice(0, 4),
+      comment(5, signed("Jim", "QA pass — over to the CEO.")),
+      comment(6, signed("Dwight", "🚚 Darryl: a tweet segment exceeds 280 characters"))
+    ]
+    assert.strictEqual(draftAttemptsSinceBrief(afterQaPass), 0)
+    // The ambient WORK-LOG comment neither counts nor resets.
+    const withWorkLog = [
+      comment(1, signed("Jim", "BRIEF: angle")),
+      comment(2, signed("Dwight", "WORK-LOG\n\n• line")),
+      comment(3, signed("Kelly", "DRAFT-READY\nv1"))
+    ]
+    assert.strictEqual(draftAttemptsSinceBrief(withWorkLog), 1)
     assert.strictEqual(draftAttemptsSinceBrief([]), 0)
   })
 
