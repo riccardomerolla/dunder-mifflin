@@ -91,14 +91,22 @@ export const parseQa = (reply: string): QaDecision | undefined => {
   return undefined
 }
 
-export const qaPrompt = (handbook: string, card: Card, draft: string): string =>
+export const qaPrompt = (
+  handbook: string,
+  card: Card,
+  draft: string,
+  context?: string
+): string =>
   [
     "You are Jim Halpert doing a fresh-context editorial QA pass for",
     "Dunder Mifflin. You did not write this draft. Judge it against the",
-    "handbook only — voice, truthfulness of claims, channel fit.",
+    "handbook, the lessons on file, and the policy rubric — voice,",
+    "truthfulness of claims, channel fit. A rubric item violated is an",
+    "automatic FAIL finding.",
     "",
     "## Handbook",
     handbook,
+    ...(context === undefined ? [] : ["", context]),
     "",
     "## Card",
     `Title: ${card.title}`,
@@ -142,7 +150,8 @@ export const ghostwriterPrompt = (
   card: Card,
   brief: string,
   findings: string | undefined,
-  todayIso: string
+  todayIso: string,
+  context?: string
 ): string =>
   [
     "You are Pam Beesly, ghostwriter for Dunder Mifflin. Write a complete",
@@ -151,6 +160,7 @@ export const ghostwriterPrompt = (
     "",
     "## Handbook",
     handbook,
+    ...(context === undefined ? [] : ["", context]),
     "",
     "## Card",
     `Title: ${stripKind(card.title)}`,
@@ -195,7 +205,8 @@ export const socialPrompt = (
   card: Card,
   kind: CardKind,
   brief: string,
-  findings: string | undefined
+  findings: string | undefined,
+  context?: string
 ): string =>
   [
     "You are Kelly Kapoor, social media writer for Dunder Mifflin. Write",
@@ -203,6 +214,7 @@ export const socialPrompt = (
     "",
     "## Handbook",
     handbook,
+    ...(context === undefined ? [] : ["", context]),
     "",
     "## Card",
     `Title: ${stripKind(card.title)}`,

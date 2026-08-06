@@ -36,36 +36,36 @@ Decision record from the founding grilling session, 2026-08-05.
 
 ## The office (decisions)
 
-| Decision       | Choice                                                                                                                                                                                                                                              |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Relationship   | New sibling repo to Nightcall. Copies the proven architecture; shares no code beyond `@llm4ts/*`. A common "virtual company" kernel is extracted only if a third company appears.                                                                     |
-| Control plane  | The existing **riccardo.log** Basecamp project (id 47528834, card table 9953815788), one card table = the whole pipeline, via `@llm4ts/flow/BasecampTool`. Columns are the state machine; work type rides in a title prefix (`[blog] [x] [li] [ig] [digest] [opportunity] [analysis] [suggestion]`). |
+| Decision       | Choice                                                                                                                                                                                                                                                                                                                           |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Relationship   | New sibling repo to Nightcall. Copies the proven architecture; shares no code beyond `@llm4ts/*`. A common "virtual company" kernel is extracted only if a third company appears.                                                                                                                                                |
+| Control plane  | The existing **riccardo.log** Basecamp project (id 47528834, card table 9953815788), one card table = the whole pipeline, via `@llm4ts/flow/BasecampTool`. Columns are the state machine; work type rides in a title prefix (`[blog] [x] [li] [ig] [digest] [opportunity] [analysis] [suggestion]`).                             |
 | State machine  | Triage (idea inbox) → Ready (briefed) → Drafting (wip) → Review (CEO gate) → Approved (publish trigger) → Done (published). Not now = parked. Set up on the board 2026-08-05: Ready 9953815795, Drafting 9953815797, Review 10169303306, Approved 10169303540 (Triage 9953815792, Not now 9953815794, Done 9953815798 built-in). |
-| Publish gate   | **Approved auto-publishes.** Moving a card to Approved is the click; a deterministic publisher posts it. The CEO gates every piece in Review; Approved is authorization.                                                                              |
-| Publish path   | Direct platform APIs, phased: X first, LinkedIn second, Instagram last-or-never. Blog is already solved: posts are markdown PRs to `riccardomerolla.github.io` (Jekyll, GitHub Pages) via `GitHubTool` — create PR at Drafting-end, merge on Approved. |
-| Publisher home | Channel clients are deterministic Effect services in this repo — channel plumbing operated by the daemon, not LLM tools. Promoted to llm4ts only if a second company needs them (the BasecampTool arc).                                               |
-| Seat config    | `seats.json`, schema-decoded at startup: per seat `{ connector, model, reasoningEffort?, budgetUsdPerCard?, cadence? }` with inherited defaults, validated against the llm4ts connector-id table. Env vars carry secrets and machine-local overrides. |
-| Web access     | Research seats use CLI connectors whose harnesses have web tools (claude-cli WebSearch, gemini-cli grounding). No fetcher infrastructure in v1; a curated-feeds pipeline is a later hardening step if digest quality or cost demands it.               |
-| Metrics        | v1 Analyst reports from own telemetry (cards shipped, cadence kept, cost per piece from the ledger) plus a recurring "metrics drop" card the CEO pastes platform numbers into weekly. Platform metrics APIs arrive with each channel's publisher.      |
-| Clock          | One daemon, two clocks: ~5-min heartbeat polls the board and advances cards reactively; scheduled seats fire from `cadence` fields checked against last-run timestamps in the state dir (catch-up-on-wake). Publishing targets live in COMPANY.md.     |
-| Guardrails     | ~$1/card (seat-overridable), ~$10/day agency-wide via claim-throttling, JSONL ledger + invoice comment per card. Publisher hard caps: 3 X posts/day, 1 LinkedIn/day, 1 Instagram/day, 1 blog merge/day — overflow queues in Approved.                 |
-| Steering       | COMPANY.md is the strategy doc: brand voice, topics of interest, niches, channel cadence targets. Injected into every seat prompt; the Editor ranks Triage against it. The CEO steers by editing it.                                                  |
+| Publish gate   | **Approved auto-publishes.** Moving a card to Approved is the click; a deterministic publisher posts it. The CEO gates every piece in Review; Approved is authorization.                                                                                                                                                         |
+| Publish path   | Direct platform APIs, phased: X first, LinkedIn second, Instagram last-or-never. Blog is already solved: posts are markdown PRs to `riccardomerolla.github.io` (Jekyll, GitHub Pages) via `GitHubTool` — create PR at Drafting-end, merge on Approved.                                                                           |
+| Publisher home | Channel clients are deterministic Effect services in this repo — channel plumbing operated by the daemon, not LLM tools. Promoted to llm4ts only if a second company needs them (the BasecampTool arc).                                                                                                                          |
+| Seat config    | `seats.json`, schema-decoded at startup: per seat `{ connector, model, reasoningEffort?, budgetUsdPerCard?, cadence? }` with inherited defaults, validated against the llm4ts connector-id table. Env vars carry secrets and machine-local overrides.                                                                            |
+| Web access     | Research seats use CLI connectors whose harnesses have web tools (claude-cli WebSearch, gemini-cli grounding). No fetcher infrastructure in v1; a curated-feeds pipeline is a later hardening step if digest quality or cost demands it.                                                                                         |
+| Metrics        | v1 Analyst reports from own telemetry (cards shipped, cadence kept, cost per piece from the ledger) plus a recurring "metrics drop" card the CEO pastes platform numbers into weekly. Platform metrics APIs arrive with each channel's publisher.                                                                                |
+| Clock          | One daemon, two clocks: ~5-min heartbeat polls the board and advances cards reactively; scheduled seats fire from `cadence` fields checked against last-run timestamps in the state dir (catch-up-on-wake). Publishing targets live in COMPANY.md.                                                                               |
+| Guardrails     | ~$1/card (seat-overridable), ~$10/day agency-wide via claim-throttling, JSONL ledger + invoice comment per card. Publisher hard caps: 3 X posts/day, 1 LinkedIn/day, 1 Instagram/day, 1 blog merge/day — overflow queues in Approved.                                                                                            |
+| Steering       | COMPANY.md is the strategy doc: brand voice, topics of interest, niches, channel cadence targets. Injected into every seat prompt; the Editor ranks Triage against it. The CEO steers by editing it.                                                                                                                             |
 
 ## The cast
 
 The deterministic daemon and every judgment seat is a character from The
 Office (US). The CEO is David Wallace.
 
-| Character         | Seat                        | Role                                                                                                                                                              |
-| ----------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Dwight Schrute**| Chief of Staff (the daemon) | Deterministic, never an LLM. Assistant to the Regional Manager: heartbeat, claims, budgets, ledger, rate caps, publishing, column transitions. Enforces the rules.  |
-| **Jim Halpert**   | Editor-in-Chief             | The judgment gate. Ranks Triage against COMPANY.md, promotes to Ready with a concrete brief, parks duds to Not now, runs a fresh-context brand/QA pass on drafts before they reach Review, spawns repurpose children when a piece ships. |
-| **Michael Scott** | Opportunity Scout           | Generates business ideas: niches, digital opportunities, products. Michael Scott Paper Company energy — most ideas bad, occasionally brilliant; Jim filters. Files `[opportunity]` cards into Triage. Weekly.                            |
-| **Pam Beesly**    | Ghostwriter                 | Takes `[blog]` Ready cards to a researched draft; deliverable is a Jekyll PR to the blog repo, PR link on the card entering Review.                                 |
-| **Kelly Kapoor**  | Social Repurposer           | Turns shipped posts and briefs into channel-native content: `[x]` threads, `[li]` posts, `[ig]` captions. Card content is the final copy the publisher posts verbatim. |
-| **Ryan Howard**   | Trend Scout                 | Follows COMPANY.md topics, files `[digest]` cards distilling what mattered and seeds idea cards into Triage. Daily.                                                |
-| **Oscar Martinez**| Analyst                     | Weekly `[analysis]` cards: shipped volume, cadence kept vs targets, cost per piece, platform numbers from the metrics-drop card. Actual accountant energy.          |
-| **Andy Bernard**  | Growth Advisor              | Audits the digital presence (profiles, bios, blog structure, SEO basics) and files `[suggestion]` cards. Cornell-grade personal branding. Weekly.                   |
+| Character          | Seat                        | Role                                                                                                                                                                                                                                     |
+| ------------------ | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Dwight Schrute** | Chief of Staff (the daemon) | Deterministic, never an LLM. Assistant to the Regional Manager: heartbeat, claims, budgets, ledger, rate caps, publishing, column transitions. Enforces the rules.                                                                       |
+| **Jim Halpert**    | Editor-in-Chief             | The judgment gate. Ranks Triage against COMPANY.md, promotes to Ready with a concrete brief, parks duds to Not now, runs a fresh-context brand/QA pass on drafts before they reach Review, spawns repurpose children when a piece ships. |
+| **Michael Scott**  | Opportunity Scout           | Generates business ideas: niches, digital opportunities, products. Michael Scott Paper Company energy — most ideas bad, occasionally brilliant; Jim filters. Files `[opportunity]` cards into Triage. Weekly.                            |
+| **Pam Beesly**     | Ghostwriter                 | Takes `[blog]` Ready cards to a researched draft; deliverable is a Jekyll PR to the blog repo, PR link on the card entering Review.                                                                                                      |
+| **Kelly Kapoor**   | Social Repurposer           | Turns shipped posts and briefs into channel-native content: `[x]` threads, `[li]` posts, `[ig]` captions. Card content is the final copy the publisher posts verbatim.                                                                   |
+| **Ryan Howard**    | Trend Scout                 | Follows COMPANY.md topics, files `[digest]` cards distilling what mattered and seeds idea cards into Triage. Daily.                                                                                                                      |
+| **Oscar Martinez** | Analyst                     | Weekly `[analysis]` cards: shipped volume, cadence kept vs targets, cost per piece, platform numbers from the metrics-drop card. Actual accountant energy.                                                                               |
+| **Andy Bernard**   | Growth Advisor              | Audits the digital presence (profiles, bios, blog structure, SEO basics) and files `[suggestion]` cards. Cornell-grade personal branding. Weekly.                                                                                        |
 
 Card comments are signed "— <Character>, Dunder Mifflin" (e.g. "— Dwight").
 
@@ -108,3 +108,20 @@ Card comments are signed "— <Character>, Dunder Mifflin" (e.g. "— Dwight").
   than cards; v1 ships them as cards.
 - Card due-date and position ops, if scheduling on the board is wanted.
 - Basecamp attachment upload for `[ig]` image workflows (Phase 4).
+
+## Amendment 2026-08-06: memory and policy live on Basecamp
+
+Grilling decisions: the office's memory is the **message board** — lessons
+written only by Jim on terminal events (a park at the attempt cap, CEO
+rejections, repeated findings), one message per lesson, titled with the
+card-kind grammar (`[x] …`, `[all] …`). Policy is **CEO-editable
+todolists** named `Policy: <stage> [kind]` (e.g. `Policy: qa [all]`),
+read-only to the office. Dwight injects both deterministically at
+dispatch: the newest 5 kind-matched lessons and the scenario's rubric go
+into maker and QA prompts; a rubric violation is an automatic FAIL
+finding. The CEO curates memory by archiving messages and changes policy
+by editing todolists — effective next beat, no deploy. Recall is title
+filtering over `listMessages` (no search dependency). llm4ts 0.9.1
+shipped the ops (`listMessages`, `createMessage --no-subscribe`,
+`listTodolists`, `listTodos`); llm4ts MemoryStore (ADR 0007) is
+deliberately not used — agency memory belongs on the control plane.

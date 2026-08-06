@@ -1,5 +1,5 @@
 import { mkdir, stat, writeFile } from "node:fs/promises"
-import { dirname, join } from "node:path"
+import { dirname, join, resolve } from "node:path"
 import * as Effect from "effect/Effect"
 import type { ProcessExecutorShape } from "@llm4ts/core/ProcessExecutor"
 import { ProcessError, type FlowError } from "@llm4ts/flow/FlowError"
@@ -72,7 +72,9 @@ const pathExists = (path: string): Effect.Effect<boolean> =>
     Effect.catch(() => Effect.succeed(false))
   )
 
-export const blogCloneDir = (workspaceDir: string): string => join(workspaceDir, "blog")
+// Absolute: clone commands run with cwd = the clone's parent, so a
+// relative target would double the path (.state/.state/blog).
+export const blogCloneDir = (workspaceDir: string): string => resolve(workspaceDir, "blog")
 
 export const ensureClone = (
   process: ProcessExecutorShape,

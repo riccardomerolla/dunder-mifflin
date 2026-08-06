@@ -6,7 +6,10 @@ import {
   type BasecampToolShape,
   type Card,
   type CardComment,
-  type Column
+  type Column,
+  type Message,
+  type TodoItem,
+  type Todolist
 } from "@llm4ts/flow/BasecampTool"
 import type { FlowError } from "@llm4ts/flow/FlowError"
 import type { FlowEventsShape } from "@llm4ts/flow/FlowEvents"
@@ -28,6 +31,12 @@ export interface BoardShape {
   ) => Effect.Effect<void, FlowError>
   readonly comments: (cardId: number) => Effect.Effect<ReadonlyArray<CardComment>, FlowError>
   readonly readCard: (cardId: number) => Effect.Effect<Card, FlowError>
+  readonly listMessages: Effect.Effect<ReadonlyArray<Message>, FlowError>
+  readonly createMessage: (title: string, body: string) => Effect.Effect<Message, FlowError>
+  readonly policyLists: Effect.Effect<
+    ReadonlyArray<readonly [Todolist, ReadonlyArray<TodoItem>]>,
+    FlowError
+  >
 }
 
 // Basecamp renders comments as rich text; recover plain text for prompt
@@ -123,7 +132,16 @@ export const makeBoard = (
         commentAs: (character, cardId, body) =>
           basecamp.writeCardComment(cardId, signed(character, body)),
         comments: basecamp.readCardComments,
-        readCard: basecamp.readCard
+        readCard: basecamp.readCard,
+        listMessages: basecamp.listMessages,
+        createMessage: basecamp.createMessage,
+        policyLists: basecamp.listTodolists.pipe(
+          Effect.flatMap((lists) =>
+            Effect.forEach(lists, (list) =>
+              basecamp.listTodos(list.id).pipe(Effect.map((todos) => [list, todos] as const))
+            )
+          )
+        )
       }
     }
   )

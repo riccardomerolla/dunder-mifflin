@@ -4,7 +4,7 @@ import * as Effect from "effect/Effect"
 import * as Ref from "effect/Ref"
 import { makeChat } from "@llm4ts/flow/Chat"
 import { CostBudget, type CostCell } from "@llm4ts/flow/CostLedger"
-import type { Card } from "@llm4ts/flow/BasecampTool"
+import type { Card, CardComment } from "@llm4ts/flow/BasecampTool"
 import type { FlowError } from "@llm4ts/flow/FlowError"
 import type { FlowEventsShape } from "@llm4ts/flow/FlowEvents"
 import { makeGitHubTool } from "@llm4ts/flow/GitHubTool"
@@ -16,7 +16,13 @@ import {
 import { nodeProcessExecutor } from "@llm4ts/runner/NodeProcessExecutor"
 import { ensureClone, pushPostBranch } from "./Blog.ts"
 import type { BoardShape } from "./Board.ts"
-import { draftAttemptsSinceBrief, latestOfficeCommentWith, stripSignature } from "./Board.ts"
+import {
+  draftAttemptsSinceBrief,
+  htmlToText,
+  latestOfficeCommentWith,
+  stripSignature
+} from "./Board.ts"
+import { distillPrompt, lessonsSection, parseLesson, rubricSection } from "./Memory.ts"
 import type { AgencyConfig } from "./Config.ts"
 import { LedgerEntry, appendLedger } from "./Ledger.ts"
 import {
@@ -141,6 +147,24 @@ const record = (
     )
   })
 
+// Memory + policy context, fetched deterministically per run and
+// injected into maker and QA prompts. Failures degrade to no context —
+// a missing message board never blocks the pipeline.
+const memoryContext = (
+  deps: SeatDeps,
+  stage: "drafting" | "qa",
+  kind: string
+): Effect.Effect<string | undefined> =>
+  Effect.gen(function* () {
+    const messages = yield* deps.board.listMessages.pipe(Effect.orElseSucceed(() => []))
+    const lists = yield* deps.board.policyLists.pipe(Effect.orElseSucceed(() => []))
+    const sections = [
+      lessonsSection(messages, kind, 5),
+      rubricSection(lists, stage, kind)
+    ].filter((section): section is string => section !== undefined)
+    return sections.length === 0 ? undefined : sections.join("\n\n")
+  })
+
 // --- Jim: triage one card ---
 
 export const runTriage = (deps: SeatDeps, card: Card): Effect.Effect<void, FlowError> =>
@@ -208,6 +232,9 @@ export const runMaker = (
       )
       yield* deps.board.moveTo(card.id, "notNow")
       yield* record(deps, seat, card, "Bounced", 0)
+      // A park is a terminal event with signal: Jim distills one lesson
+      // into the office's memory (the message board) before moving on.
+      yield* distillLesson(deps, card, comments).pipe(Effect.ignore)
       return
     }
     const handbook = yield* readHandbook(process.cwd())
@@ -220,6 +247,40 @@ export const runMaker = (
     }
   })
 
+const distillLesson = (
+  deps: SeatDeps,
+  card: Card,
+  comments: ReadonlyArray<CardComment>
+): Effect.Effect<void, FlowError> =>
+  Effect.gen(function* () {
+    const kind = parseKind(card.title) ?? "all"
+    const findingsHistory = comments
+      .map((comment) => htmlToText(comment.contentHtml))
+      .filter((text) => text.startsWith("FINDINGS:"))
+      .map(stripSignature)
+      .join("\n\n")
+    if (findingsHistory.length === 0) {
+      return
+    }
+    const { reply, costUsd } = yield* askSeat(
+      deps,
+      "editor",
+      "editor-distill",
+      "",
+      distillPrompt(card.title, findingsHistory, kind)
+    )
+    const lesson = reply === undefined ? undefined : parseLesson(reply)
+    if (lesson === undefined) {
+      yield* record(deps, "editor", card, "Failed", costUsd)
+      return
+    }
+    yield* deps.board.createMessage(
+      lesson.title,
+      `${lesson.body}\n\nOrigin: card ${card.id} (${card.title}), parked at the draft cap.\n\n— Jim · Dunder Mifflin`
+    )
+    yield* record(deps, "editor", card, "Advanced", costUsd)
+  })
+
 const runGhostwriter = (
   deps: SeatDeps,
   card: Card,
@@ -230,12 +291,13 @@ const runGhostwriter = (
   Effect.gen(function* () {
     const nowMs = yield* Clock.currentTimeMillis
     const todayIso = new Date(nowMs).toISOString()
+    const context = yield* memoryContext(deps, "drafting", "blog")
     const { reply, costUsd } = yield* askSeat(
       deps,
       "ghostwriter",
       "ghostwriter",
       handbook,
-      ghostwriterPrompt(handbook, card, brief, findings, todayIso)
+      ghostwriterPrompt(handbook, card, brief, findings, todayIso, context)
     )
     const post = reply === undefined ? undefined : parsePost(reply)
     if (post === undefined) {
@@ -283,12 +345,13 @@ const runSocial = (
     if (kind === undefined) {
       return
     }
+    const context = yield* memoryContext(deps, "drafting", kind)
     const { reply, costUsd } = yield* askSeat(
       deps,
       "social",
       "social",
       handbook,
-      socialPrompt(handbook, card, kind, brief, findings)
+      socialPrompt(handbook, card, kind, brief, findings, context)
     )
     const copy = reply === undefined ? undefined : parseCopy(reply)
     if (copy === undefined) {
@@ -313,12 +376,14 @@ export const runQa = (deps: SeatDeps, card: Card): Effect.Effect<void, FlowError
     // is exactly what would be published.
     const draft = stripSignature(draftComment).replace(draftReadyMarker, "").trim()
     const handbook = yield* readHandbook(process.cwd())
+    const kind = parseKind(card.title) ?? "all"
+    const context = yield* memoryContext(deps, "qa", kind)
     const { reply, costUsd } = yield* askSeat(
       deps,
       "editor",
       "editor-qa",
       handbook,
-      qaPrompt(handbook, card, draft)
+      qaPrompt(handbook, card, draft, context)
     )
     const decision = reply === undefined ? undefined : parseQa(reply)
     if (decision === undefined) {
