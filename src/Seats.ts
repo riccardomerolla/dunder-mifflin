@@ -2,11 +2,13 @@ import { readFile } from "node:fs/promises"
 import * as Clock from "effect/Clock"
 import * as Effect from "effect/Effect"
 import * as Ref from "effect/Ref"
+import type * as Scope from "effect/Scope"
+import * as Stream from "effect/Stream"
 import { makeChat } from "@llm4ts/flow/Chat"
 import { CostBudget, type CostCell } from "@llm4ts/flow/CostLedger"
 import type { Card, CardComment } from "@llm4ts/flow/BasecampTool"
 import type { FlowError } from "@llm4ts/flow/FlowError"
-import type { FlowEventsShape } from "@llm4ts/flow/FlowEvents"
+import type { FlowEventHub, FlowEventsShape } from "@llm4ts/flow/FlowEvents"
 import { makeGitHubTool } from "@llm4ts/flow/GitHubTool"
 import {
   makeFlowRunnerContext,
@@ -23,6 +25,7 @@ import {
   stripSignature
 } from "./Board.ts"
 import { distillPrompt, lessonsSection, parseLesson, rubricSection } from "./Memory.ts"
+import { durationLabel, renderWorkLog, workLogLines, workLogMarker } from "./WorkLog.ts"
 import type { AgencyConfig } from "./Config.ts"
 import { LedgerEntry, appendLedger } from "./Ledger.ts"
 import {
@@ -70,7 +73,8 @@ const askSeat = (
   seatKey: string,
   agent: string,
   system: string,
-  prompt: string
+  prompt: string,
+  tap?: (hub: FlowEventHub) => Effect.Effect<void, never, Scope.Scope>
 ): Effect.Effect<SeatReply> =>
   Effect.gen(function* () {
     const connector = deps.config.connectorConfigFor(seatKey)
@@ -95,6 +99,9 @@ const askSeat = (
     yield* Effect.scoped(
       Effect.gen(function* () {
         const bundle = yield* makeFlowRunnerContext(options, dependencies)
+        if (tap !== undefined) {
+          yield* tap(bundle.events)
+        }
         yield* runWithBundle(
           bundle,
           options,
@@ -165,6 +172,86 @@ const memoryContext = (
     return sections.length === 0 ? undefined : sections.join("\n\n")
   })
 
+// --- The card's living work log ---
+
+interface WorkLogRef {
+  readonly id: number
+  readonly lines: ReadonlyArray<string>
+}
+
+// Find the card's WORK-LOG comment or create it. Failures degrade to
+// undefined — the trace never blocks the pipeline.
+const ensureWorkLog = (
+  deps: SeatDeps,
+  cardId: number
+): Effect.Effect<WorkLogRef | undefined> =>
+  Effect.gen(function* () {
+    const comments = yield* deps.board.comments(cardId)
+    for (let index = comments.length - 1; index >= 0; index -= 1) {
+      const comment = comments[index]
+      const text = htmlToText(comment?.contentHtml ?? "")
+      if (comment !== undefined && text.trimStart().startsWith(workLogMarker)) {
+        return { id: comment.id, lines: workLogLines(text) }
+      }
+    }
+    const created = yield* deps.board.commentAs("Dwight", cardId, renderWorkLog([]))
+    return { id: created.id, lines: [] }
+  }).pipe(Effect.catch(() => Effect.succeed(undefined)))
+
+// The live tail: a subscriber counts tool calls and keeps the last
+// activity line; an editor rewrites the work-log comment at most once
+// per minute. Both fibers die with the run's scope.
+const liveTrace =
+  (deps: SeatDeps, workLog: WorkLogRef, current: string) =>
+  (hub: FlowEventHub): Effect.Effect<void, never, Scope.Scope> =>
+    Effect.gen(function* () {
+      const startedMs = yield* Clock.currentTimeMillis
+      const toolCount = yield* Ref.make(0)
+      const lastActivity = yield* Ref.make<string | undefined>(undefined)
+      const subscription = yield* hub.subscribe
+      yield* Stream.fromSubscription(subscription).pipe(
+        Stream.runForEach((event) =>
+          event._tag === "ToolUse"
+            ? Ref.update(toolCount, (count) => count + 1).pipe(
+                Effect.andThen(Ref.set(lastActivity, `● ${event.tool} (${event.args})`))
+              )
+            : Effect.void
+        ),
+        Effect.forkScoped,
+        Effect.asVoid
+      )
+      yield* Effect.sleep("60 seconds").pipe(
+        Effect.andThen(
+          Effect.gen(function* () {
+            const count = yield* Ref.get(toolCount)
+            const activity = yield* Ref.get(lastActivity)
+            const nowMs = yield* Clock.currentTimeMillis
+            const tail =
+              `${current} · ${durationLabel(nowMs - startedMs)} · ${count} tool calls` +
+              (activity === undefined ? "" : ` · ${activity}`)
+            yield* deps.board
+              .editCommentAs("Dwight", workLog.id, renderWorkLog(workLog.lines, tail))
+              .pipe(Effect.ignore)
+          })
+        ),
+        Effect.forever,
+        Effect.forkScoped,
+        Effect.asVoid
+      )
+    })
+
+// Freeze the finished run's line into the log and drop the live tail.
+const freezeWorkLog = (
+  deps: SeatDeps,
+  workLog: WorkLogRef | undefined,
+  line: string
+): Effect.Effect<void> =>
+  workLog === undefined
+    ? Effect.void
+    : deps.board
+        .editCommentAs("Dwight", workLog.id, renderWorkLog([...workLog.lines, line]))
+        .pipe(Effect.ignore)
+
 // --- Jim: triage one card ---
 
 export const runTriage = (deps: SeatDeps, card: Card): Effect.Effect<void, FlowError> =>
@@ -224,6 +311,7 @@ export const runMaker = (
   Effect.gen(function* () {
     const comments = yield* deps.board.comments(card.id)
     const attempts = draftAttemptsSinceBrief(comments)
+    const workLog = yield* ensureWorkLog(deps, card.id)
     if (attempts >= deps.config.maxDraftAttempts) {
       yield* deps.board.commentAs(
         seat === "ghostwriter" ? "Pam" : "Kelly",
@@ -231,6 +319,7 @@ export const runMaker = (
         `Stuck after ${attempts} drafts — parking for the CEO. See the QA findings above.`
       )
       yield* deps.board.moveTo(card.id, "notNow")
+      yield* freezeWorkLog(deps, workLog, `⏸ parked at the attempt cap (${attempts} drafts)`)
       yield* record(deps, seat, card, "Bounced", 0)
       // A park is a terminal event with signal: Jim distills one lesson
       // into the office's memory (the message board) before moving on.
@@ -241,9 +330,9 @@ export const runMaker = (
     const brief = yield* briefFor(deps, card.id)
     const findings = yield* findingsFor(deps, card.id)
     if (seat === "ghostwriter") {
-      yield* runGhostwriter(deps, card, handbook, brief, findings)
+      yield* runGhostwriter(deps, card, handbook, brief, findings, workLog, attempts + 1)
     } else {
-      yield* runSocial(deps, card, handbook, brief, findings)
+      yield* runSocial(deps, card, handbook, brief, findings, workLog, attempts + 1)
     }
   })
 
@@ -286,7 +375,9 @@ const runGhostwriter = (
   card: Card,
   handbook: string,
   brief: string,
-  findings: string | undefined
+  findings: string | undefined,
+  workLog: WorkLogRef | undefined,
+  attempt: number
 ): Effect.Effect<void, FlowError> =>
   Effect.gen(function* () {
     const nowMs = yield* Clock.currentTimeMillis
@@ -297,11 +388,17 @@ const runGhostwriter = (
       "ghostwriter",
       "ghostwriter",
       handbook,
-      ghostwriterPrompt(handbook, card, brief, findings, todayIso, context)
+      ghostwriterPrompt(handbook, card, brief, findings, todayIso, context),
+      workLog === undefined
+        ? undefined
+        : liveTrace(deps, workLog, `🔨 Pam drafting (attempt ${attempt})`)
     )
+    const doneMs = yield* Clock.currentTimeMillis
+    const runLabel = `🔨 Pam draft #${attempt} · ${durationLabel(doneMs - nowMs)} · $${costUsd.toFixed(2)}`
     const post = reply === undefined ? undefined : parsePost(reply)
     if (post === undefined) {
       yield* deps.board.commentAs("Pam", card.id, "Draft attempt produced no parseable post; retrying next beat.")
+      yield* freezeWorkLog(deps, workLog, `${runLabel} · no parseable post`)
       yield* record(deps, "ghostwriter", card, "Failed", costUsd)
       return
     }
@@ -330,6 +427,7 @@ const runGhostwriter = (
       card.id,
       draftReadyComment(`Blog draft is up as a PR: ${pr.url}\n\n${post.content}`)
     )
+    yield* freezeWorkLog(deps, workLog, `${runLabel} · draft ready (${pr.url})`)
     yield* record(deps, "ghostwriter", card, "Advanced", costUsd)
   })
 
@@ -338,28 +436,38 @@ const runSocial = (
   card: Card,
   handbook: string,
   brief: string,
-  findings: string | undefined
+  findings: string | undefined,
+  workLog: WorkLogRef | undefined,
+  attempt: number
 ): Effect.Effect<void, FlowError> =>
   Effect.gen(function* () {
     const kind = parseKind(card.title)
     if (kind === undefined) {
       return
     }
+    const startMs = yield* Clock.currentTimeMillis
     const context = yield* memoryContext(deps, "drafting", kind)
     const { reply, costUsd } = yield* askSeat(
       deps,
       "social",
       "social",
       handbook,
-      socialPrompt(handbook, card, kind, brief, findings, context)
+      socialPrompt(handbook, card, kind, brief, findings, context),
+      workLog === undefined
+        ? undefined
+        : liveTrace(deps, workLog, `🔨 Kelly drafting [${kind}] (attempt ${attempt})`)
     )
+    const doneMs = yield* Clock.currentTimeMillis
+    const runLabel = `🔨 Kelly draft #${attempt} · ${durationLabel(doneMs - startMs)} · $${costUsd.toFixed(2)}`
     const copy = reply === undefined ? undefined : parseCopy(reply)
     if (copy === undefined) {
       yield* deps.board.commentAs("Kelly", card.id, "Draft attempt produced no parseable copy; retrying next beat.")
+      yield* freezeWorkLog(deps, workLog, `${runLabel} · no parseable copy`)
       yield* record(deps, "social", card, "Failed", costUsd)
       return
     }
     yield* deps.board.commentAs("Kelly", card.id, draftReadyComment(copy))
+    yield* freezeWorkLog(deps, workLog, `${runLabel} · draft ready`)
     yield* record(deps, "social", card, "Advanced", costUsd)
   })
 
@@ -378,24 +486,32 @@ export const runQa = (deps: SeatDeps, card: Card): Effect.Effect<void, FlowError
     const handbook = yield* readHandbook(process.cwd())
     const kind = parseKind(card.title) ?? "all"
     const context = yield* memoryContext(deps, "qa", kind)
+    const workLog = yield* ensureWorkLog(deps, card.id)
+    const startMs = yield* Clock.currentTimeMillis
     const { reply, costUsd } = yield* askSeat(
       deps,
       "editor",
       "editor-qa",
       handbook,
-      qaPrompt(handbook, card, draft, context)
+      qaPrompt(handbook, card, draft, context),
+      workLog === undefined ? undefined : liveTrace(deps, workLog, "🔎 Jim in QA")
     )
+    const doneMs = yield* Clock.currentTimeMillis
+    const runLabel = `🔎 Jim QA · ${durationLabel(doneMs - startMs)} · $${costUsd.toFixed(2)}`
     const decision = reply === undefined ? undefined : parseQa(reply)
     if (decision === undefined) {
+      yield* freezeWorkLog(deps, workLog, `${runLabel} · no verdict`)
       yield* record(deps, "editor", card, "Failed", costUsd)
       return
     }
     if (decision.pass) {
       yield* deps.board.commentAs("Jim", card.id, "QA pass — over to the CEO.")
       yield* deps.board.moveTo(card.id, "review")
+      yield* freezeWorkLog(deps, workLog, `${runLabel} · PASS → Review`)
       yield* record(deps, "editor", card, "Advanced", costUsd)
     } else {
       yield* deps.board.commentAs("Jim", card.id, `FINDINGS:\n${decision.findings}`)
+      yield* freezeWorkLog(deps, workLog, `${runLabel} · FAIL, findings posted`)
       yield* record(deps, "editor", card, "Bounced", costUsd)
     }
   })

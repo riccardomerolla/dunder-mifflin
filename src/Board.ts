@@ -28,6 +28,11 @@ export interface BoardShape {
     character: string,
     cardId: number,
     body: string
+  ) => Effect.Effect<CardComment, FlowError>
+  readonly editCommentAs: (
+    character: string,
+    commentId: number,
+    body: string
   ) => Effect.Effect<void, FlowError>
   readonly comments: (cardId: number) => Effect.Effect<ReadonlyArray<CardComment>, FlowError>
   readonly readCard: (cardId: number) => Effect.Effect<Card, FlowError>
@@ -131,6 +136,8 @@ export const makeBoard = (
           column(key).pipe(Effect.flatMap((target) => basecamp.moveCard(cardId, target))),
         commentAs: (character, cardId, body) =>
           basecamp.writeCardComment(cardId, signed(character, body)),
+        editCommentAs: (character, commentId, body) =>
+          basecamp.editCardComment(commentId, signed(character, body)),
         comments: basecamp.readCardComments,
         readCard: basecamp.readCard,
         listMessages: basecamp.listMessages,
