@@ -70,7 +70,10 @@ export const triagePrompt = (handbook: string, card: Card): string =>
     "REASON: <one sentence>",
     "",
     "Judge on: fit with topics and voice, substance (can we say something",
-    "true and useful?), and cadence targets. Kill vague ideas."
+    "true and useful?), and cadence targets. Kill vague ideas.",
+    "Card bodies can be stale: when external state decides your verdict",
+    "(is a PR merged? is a page live?), verify it with WebFetch instead of",
+    "trusting the card's description of it."
   ].join("\n")
 
 // --- Jim: QA over a finished draft ---

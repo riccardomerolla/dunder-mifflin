@@ -39,7 +39,9 @@ describe("board comment conventions", () => {
       comment(4, signed("Kelly", "DRAFT-READY\nv2")),
       comment(5, signed("Kelly", "Stuck after 2 drafts — parking for the CEO."))
     ]
-    assert.strictEqual(draftAttemptsSinceBrief(history), 2)
+    // history ends with the park comment, which itself resets the count.
+    assert.strictEqual(draftAttemptsSinceBrief(history), 0)
+    assert.strictEqual(draftAttemptsSinceBrief(history.slice(0, 4)), 2)
     // Unparseable attempts burn money too: DRAFT-FAILED counts, or a
     // maker retries forever (Kelly, three paid loops, 2026-08-06).
     assert.strictEqual(
@@ -53,6 +55,14 @@ describe("board comment conventions", () => {
     // The CEO re-queues through Triage: Jim's new brief resets the count.
     const revived = [...history, comment(6, signed("Jim", "BRIEF: new angle, fix the link"))]
     assert.strictEqual(draftAttemptsSinceBrief(revived), 0)
+    // A park also resets: anything after it means a human deliberately
+    // revived the card — dragging it straight to Ready must not insta-park.
+    const parked = [
+      ...history.slice(0, 4),
+      comment(5, signed("Kelly", "Stuck after 2 drafts — parking for the CEO.")),
+      comment(6, signed("Kelly", "DRAFT-READY\nv3"))
+    ]
+    assert.strictEqual(draftAttemptsSinceBrief(parked), 1)
     assert.strictEqual(draftAttemptsSinceBrief([]), 0)
   })
 

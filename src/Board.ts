@@ -92,9 +92,10 @@ export const latestOfficeCommentWith = (
 export const stripSignature = (text: string): string =>
   text.replace(/\n*— [^\n]*· Dunder Mifflin\s*$/, "").trim()
 
-// Draft attempts since the most recent brief: a CEO re-queue through
-// Triage yields a fresh BRIEF from Jim, which resets the cap — without
-// this, a parked card would re-park instantly on revival.
+// Draft attempts since the most recent brief OR park: a fresh BRIEF
+// (re-triage) resets the cap, and so does a park comment — any activity
+// after a park means a human deliberately revived the card, and dragging
+// it straight to Ready must not insta-park it against old attempts.
 export const draftAttemptsSinceBrief = (comments: ReadonlyArray<CardComment>): number => {
   let attempts = 0
   for (const comment of comments) {
@@ -102,7 +103,7 @@ export const draftAttemptsSinceBrief = (comments: ReadonlyArray<CardComment>): n
     if (!isOfficeComment(text)) {
       continue
     }
-    if (text.startsWith("BRIEF:")) {
+    if (text.startsWith("BRIEF:") || text.startsWith("Stuck after")) {
       attempts = 0
     } else if (text.startsWith("DRAFT-READY") || text.startsWith("DRAFT-FAILED")) {
       attempts += 1
