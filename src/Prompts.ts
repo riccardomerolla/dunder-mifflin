@@ -203,7 +203,7 @@ export const parseCopy = (reply: string): string | undefined => {
 }
 
 const channelGuidance: Record<string, string> = {
-  x: "An X post or short thread. Sharp, concrete, no hashtags-stuffing, no thread-bro hooks.",
+  x: "An X post or short thread. Sharp, concrete, no hashtags-stuffing, no thread-bro hooks. Hard limit 280 characters per tweet (a URL counts as 23); for more, number the segments '1/', '2/' as separate paragraphs, each within the limit.",
   li: "A LinkedIn post. The story form: context, what happened, what it means. No corporate voice.",
   ig: "An Instagram caption. Visual-first framing; note what image it assumes."
 }

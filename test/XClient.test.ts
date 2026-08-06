@@ -61,5 +61,11 @@ describe("X client (pure OAuth 1.0a plumbing)", () => {
     )
     assert.isUndefined(splitTweets("x".repeat(281)))
     assert.isUndefined(splitTweets(`1/ ok\n\n2/ ${"y".repeat(281)}`))
+    // X wraps every URL to a 23-char t.co link: a 250-char text plus a
+    // 70-char URL fits (250 + 1 + 23 = 274), raw length be damned.
+    assert.deepStrictEqual(
+      splitTweets(`${"z".repeat(250)} https://example.com/${"p".repeat(50)}`),
+      [`${"z".repeat(250)} https://example.com/${"p".repeat(50)}`]
+    )
   })
 })

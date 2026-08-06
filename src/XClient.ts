@@ -80,6 +80,11 @@ export const oauthHeader = (
 
 const tweetLimit = 280
 
+// X wraps every URL to a 23-character t.co link; length is judged as X
+// judges it, not by raw characters.
+const weightedLength = (text: string): number =>
+  text.replace(/https?:\/\/[^\s]+/g, "x".repeat(23)).length
+
 // A single tweet, or a numbered thread ("1/ ..." paragraphs). undefined
 // when any segment exceeds the limit — Darryl reports instead of
 // truncating someone's words.
@@ -90,7 +95,7 @@ export const splitTweets = (copy: string): ReadonlyArray<string> | undefined => 
     .map((segment) => segment.trim())
     .filter((segment) => segment.length > 0)
   const tweets = segments.length > 1 || /^\d+\//.test(trimmed) ? segments : [trimmed]
-  return tweets.every((tweet) => tweet.length <= tweetLimit) ? tweets : undefined
+  return tweets.every((tweet) => weightedLength(tweet) <= tweetLimit) ? tweets : undefined
 }
 
 const tweetResponse = Schema.Struct({

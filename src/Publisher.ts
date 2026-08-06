@@ -157,11 +157,14 @@ const shipTweet = (
     }
     const tweets = splitTweets(copy)
     if (tweets === undefined) {
+      // Not a dead end: bounce it back through the pipeline as findings
+      // so the maker trims and QA re-judges — Darryl never cuts words.
       yield* deps.board.commentAs(
         "Dwight",
         card.id,
-        "🚚 Darryl: a tweet segment exceeds 280 characters — send it back to Drafting for a trim; I don't cut anyone's words."
+        "FINDINGS:\n- A tweet segment exceeds 280 characters (URLs count as 23). Trim the copy, or number it as a thread ('1/', '2/' paragraphs, each within the limit). Darryl does not cut anyone's words."
       )
+      yield* deps.board.moveTo(card.id, "drafting")
       return
     }
     const firstId = yield* postThread(credentials, tweets)
