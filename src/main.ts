@@ -110,6 +110,13 @@ const beat = (
   })
 
 const program = Effect.gen(function* () {
+  // Secrets (X credentials) and machine-local knobs live in .env —
+  // gitignored, loaded natively, absent in CI. Missing file is fine.
+  try {
+    process.loadEnvFile(resolve(".env"))
+  } catch {
+    // no .env — env comes from the shell alone
+  }
   const config = yield* loadConfig(process.env, resolve("seats.json"))
   const board = yield* makeBoard(config, nodeProcessExecutor, process.cwd(), loggingEvents)
   const deps: SeatDeps = {

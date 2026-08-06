@@ -38,11 +38,11 @@ DM_CLAIM=1 node --experimental-strip-types src/main.ts  # armed
 ```
 
 **X publishing**: Darryl posts approved `[x]` cards (single tweets or
-numbered threads) via the X API v2 with OAuth 1.0a user context. Create
-a Read+Write app at developer.x.com and export `DM_X_API_KEY`,
-`DM_X_API_SECRET`, `DM_X_ACCESS_TOKEN`, `DM_X_ACCESS_SECRET` before
-starting the daemon; without them, approved X cards wait in Approved
-with an honest note.
+numbered threads) via the X API v2 with OAuth 1.0a user context. Copy
+`.env.example` to `.env` (gitignored, loaded by the daemon at startup)
+and fill the four `DM_X_*` values from a Read+Write app at
+developer.x.com, then restart the daemon. Without them, approved X
+cards wait in Approved with an honest note.
 
 Every seat runs on the `claude` CLI connector, so there is no API key in
 the environment at all: seats use the CLI's own subscription auth, the
