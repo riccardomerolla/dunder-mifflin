@@ -167,7 +167,28 @@ const shipTweet = (
       yield* deps.board.moveTo(card.id, "drafting")
       return
     }
-    const firstId = yield* postThread(credentials, tweets)
+    const posted = yield* postThread(credentials, tweets).pipe(
+      Effect.map((id) => ({ ok: true as const, id })),
+      Effect.catchTag("Process", (error) =>
+        Effect.succeed({ ok: false as const, detail: error.detail })
+      )
+    )
+    if (!posted.ok) {
+      // The API's answer belongs on the card, once — not swallowed into
+      // the daemon log while the beat retries forever.
+      const already = comments.some((comment) =>
+        htmlToText(comment.contentHtml).includes("the X API rejected the post")
+      )
+      if (!already) {
+        yield* deps.board.commentAs(
+          "Dwight",
+          card.id,
+          `🚚 Darryl: the X API rejected the post — ${posted.detail.slice(0, 200)}`
+        )
+      }
+      return
+    }
+    const firstId = posted.id
     const url = `https://x.com/i/web/status/${firstId}`
     yield* deps.board.moveTo(card.id, "done")
     yield* freezeShipLine(
