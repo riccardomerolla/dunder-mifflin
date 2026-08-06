@@ -111,10 +111,14 @@ export class AgencyConfig extends Schema.Class<AgencyConfig>("AgencyConfig")({
     // writes deterministically — so CLI seats run in their harness's
     // read-only mode: a prompt-injected card can never make a seat write
     // files or execute mutating commands.
+    // turnLimit is the in-flight bound: the cost budget is only checked
+    // after a run completes, so without it a seat can research forever
+    // (a 90-minute Pam spiral proved it).
     return cliConnectorValues.includes(seat.connector)
       ? CliConnectorConfig.make({
           connectorId,
           readOnly: true,
+          turnLimit: 40,
           ...(seat.model === undefined ? {} : { model: seat.model })
         })
       : ApiConnectorConfig.make({

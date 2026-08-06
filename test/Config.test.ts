@@ -77,6 +77,9 @@ describe("agency config", () => {
       // CLI seats must run in their harness's read-only mode so a
       // prompt-injected card can never make a seat write or execute.
       assert.isTrue(ghostwriter?._tag === "CliConnectorConfig" && ghostwriter.readOnly)
+      // Budget checks fire only after a run completes; the turn limit is
+      // the in-flight bound that stops a research spiral.
+      assert.isTrue(ghostwriter?._tag === "CliConnectorConfig" && ghostwriter.turnLimit === 40)
     })
   )
 })
