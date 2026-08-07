@@ -4,13 +4,13 @@ import * as Effect from "effect/Effect"
 import * as Schedule from "effect/Schedule"
 import type { FlowEventsShape } from "@llm4ts/flow/FlowEvents"
 import { nodeProcessExecutor } from "@llm4ts/runner/NodeProcessExecutor"
-import { latestOfficeComment, makeBoard, type BoardShape } from "./Board.ts"
+import { htmlToText, latestOfficeComment, makeBoard, type BoardShape } from "./Board.ts"
 import { describeFlowError } from "@llm4ts/flow/FlowError"
 import { loadConfig, type AgencyConfig } from "./Config.ts"
 import { decide, type BoardSnapshot } from "./Heartbeat.ts"
 import { readLedger, spentToday } from "./Ledger.ts"
 import { channelOf, runShip, shippedToday } from "./Publisher.ts"
-import { parseKind } from "./Protocol.ts"
+import { parseBlocker, parseKind } from "./Protocol.ts"
 import { runMaker, runQa, runTriage, type SeatDeps } from "./Seats.ts"
 
 // Dwight, the Chief of Staff: decode config, then run the idempotent
@@ -22,7 +22,10 @@ const loggingEvents: FlowEventsShape = {
     event._tag === "Info" ? Effect.log(event.message) : Effect.logDebug(event._tag)
 }
 
-const snapshotOf = (board: BoardShape): Effect.Effect<BoardSnapshot, unknown> =>
+const snapshotOf = (
+  board: BoardShape,
+  doneColumn: string
+): Effect.Effect<BoardSnapshot, unknown> =>
   Effect.gen(function* () {
     const [triage, ready, drafting, approved] = yield* Effect.all([
       board.cardsIn("triage"),
@@ -41,9 +44,29 @@ const snapshotOf = (board: BoardShape): Effect.Effect<BoardSnapshot, unknown> =>
         }))
       )
     )
+    // A Ready card naming a Blocked-by dependency stays unclaimed until
+    // its blocker card reaches Done; an unreadable blocker counts as
+    // blocking (fail closed).
+    const readyWithBlocks = yield* Effect.forEach(ready, (card) =>
+      Effect.gen(function* () {
+        const blockerId = parseBlocker(htmlToText(card.contentHtml))
+        if (blockerId === undefined) {
+          return { id: card.id, title: card.title }
+        }
+        const blockerColumn: string | undefined = yield* board.readCard(blockerId).pipe(
+          Effect.map((blocker): string | undefined => blocker.column.title),
+          Effect.catch(() => Effect.succeed(undefined))
+        )
+        return {
+          id: card.id,
+          title: card.title,
+          blocked: blockerColumn !== doneColumn
+        }
+      })
+    )
     return {
       triage: triage.map((card) => ({ id: card.id, title: card.title })),
-      ready: ready.map((card) => ({ id: card.id, title: card.title })),
+      ready: readyWithBlocks,
       drafting: draftingWithMarkers,
       approved: approved.map((card) => ({ id: card.id, title: card.title }))
     }
@@ -58,7 +81,7 @@ const beat = (
     const nowMs = yield* Clock.currentTimeMillis
     const entries = yield* readLedger(config.workspaceDir)
     const spent = spentToday(entries, new Date(nowMs).toISOString())
-    const snapshot = yield* snapshotOf(board)
+    const snapshot = yield* snapshotOf(board, config.board.columns.done)
     const actions = decide(snapshot, { triagePerBeat: config.triagePerBeat })
     if (actions.length === 0) {
       yield* Effect.log(`beat: quiet board ($${spent.toFixed(2)} spent today)`)

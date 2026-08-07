@@ -1,10 +1,11 @@
 import { assert, describe, it } from "@effect/vitest"
 import { decide, type BoardSnapshot } from "../src/Heartbeat.ts"
 
-const card = (id: number, title: string, officeMarker?: string) => ({
+const card = (id: number, title: string, officeMarker?: string, blocked?: boolean) => ({
   id,
   title,
-  latestOfficeMarker: officeMarker
+  latestOfficeMarker: officeMarker,
+  ...(blocked === undefined ? {} : { blocked })
 })
 
 const empty: BoardSnapshot = { triage: [], ready: [], drafting: [], approved: [] }
@@ -31,7 +32,9 @@ describe("heartbeat decisions (pure)", () => {
           card(11, "[blog] Second"),
           card(12, "[x] Tweet"),
           card(13, "[digest] Ryan's now"),
-          card(14, "[analysis] Oscar's now")
+          card(14, "[analysis] Oscar's now"),
+          // Blocked-by its unapproved product card: nobody claims it.
+          card(15, "[design] Blocked concept", undefined, true)
         ]
       },
       { triagePerBeat: 3 }

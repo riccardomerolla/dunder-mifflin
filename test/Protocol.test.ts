@@ -1,6 +1,7 @@
 import { assert, describe, it } from "@effect/vitest"
 import {
   isOfficeComment,
+  parseBlocker,
   makerSeatFor,
   parseKind,
   signed,
@@ -32,6 +33,13 @@ describe("card protocol", () => {
     assert.include(body, "— Jim · Dunder Mifflin")
     assert.isTrue(isOfficeComment(body))
     assert.isFalse(isOfficeComment("A CEO note"))
+  })
+
+  it("parses Blocked-by references from card text", () => {
+    assert.strictEqual(parseBlocker("PRD for X\n\nBlocked-by: 10181750967"), 10181750967)
+    assert.strictEqual(parseBlocker("Blocked-by: #123"), 123)
+    assert.isUndefined(parseBlocker("no dependency here"))
+    assert.isUndefined(parseBlocker("Blocked-by: soon"))
   })
 
   it("routes card kinds to maker seats", () => {

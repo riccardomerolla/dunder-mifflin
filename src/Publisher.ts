@@ -208,6 +208,13 @@ export const runShip = (deps: SeatDeps, card: Card): Effect.Effect<void, FlowErr
       yield* shipTweet(deps, card, comments)
       return
     }
+    if (kind !== "blog" && kind !== "li" && kind !== "ig") {
+      // Memos have no channel: CEO approval IS the acceptance. Darryl
+      // files the card to Done so dependents (Blocked-by) unblock.
+      yield* deps.board.moveTo(card.id, "done")
+      yield* freezeShipLine(deps, comments, "✅ Darryl filed it — accepted by the CEO")
+      return
+    }
     if (kind !== "blog") {
       // One honest note per card; the card waits in Approved for the
       // channel's publisher (Phase 2) or a manual paste.

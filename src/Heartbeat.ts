@@ -7,6 +7,8 @@ export interface SnapshotCard {
   readonly id: number
   readonly title: string
   readonly latestOfficeMarker?: string | undefined
+  /** Blocked-by dependency whose blocker card is not Done yet. */
+  readonly blocked?: boolean | undefined
 }
 
 export interface BoardSnapshot {
@@ -57,6 +59,9 @@ export const decide = (
   // it does not sprint.
   const claimed = new Set<MakerSeat>()
   for (const card of snapshot.ready) {
+    if (card.blocked === true) {
+      continue
+    }
     const kind = parseKind(card.title)
     const seat = kind === undefined ? undefined : makerSeatFor(kind)
     if (seat !== undefined && !claimed.has(seat)) {

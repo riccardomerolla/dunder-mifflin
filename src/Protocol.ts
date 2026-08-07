@@ -73,6 +73,16 @@ export const makerSeatFor = (kind: CardKind): MakerSeat | undefined => {
   }
 }
 
+// A card body may declare a dependency: "Blocked-by: <card id>". Dwight
+// refuses to claim the card until the blocker card reaches Done — the
+// product pipeline's [design]-waits-for-[product] rule, and Nightcall's
+// DEPENDS pattern in Basecamp clothes.
+export const parseBlocker = (text: string): number | undefined => {
+  const match = /Blocked-by:\s*#?(\d+)/i.exec(text)
+  const id = Number.parseInt(match?.[1] ?? "", 10)
+  return Number.isInteger(id) && id > 0 ? id : undefined
+}
+
 // Machine-readable marker a maker leaves in its signed comment when the
 // draft is complete; Jim's QA pass looks for it.
 export const draftReadyMarker = "DRAFT-READY"
