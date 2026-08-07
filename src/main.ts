@@ -5,6 +5,7 @@ import * as Schedule from "effect/Schedule"
 import type { FlowEventsShape } from "@llm4ts/flow/FlowEvents"
 import { nodeProcessExecutor } from "@llm4ts/runner/NodeProcessExecutor"
 import { latestOfficeComment, makeBoard, type BoardShape } from "./Board.ts"
+import { describeFlowError } from "@llm4ts/flow/FlowError"
 import { loadConfig, type AgencyConfig } from "./Config.ts"
 import { decide, type BoardSnapshot } from "./Heartbeat.ts"
 import { readLedger, spentToday } from "./Ledger.ts"
@@ -133,7 +134,7 @@ const program = Effect.gen(function* () {
     // A failed beat (basecamp CLI missing, network down) is reported and
     // the daemon stays up: the next beat re-derives everything from the
     // board.
-    Effect.catch((error) => Effect.logWarning(`heartbeat failed: ${String(error)}`)),
+    Effect.catch((error) => Effect.logWarning(`heartbeat failed: ${describeFlowError(error)}`)),
     Effect.asVoid,
     Effect.andThen(Effect.sleep(`${config.heartbeatSeconds} seconds`)),
     Effect.repeat(Schedule.forever)
