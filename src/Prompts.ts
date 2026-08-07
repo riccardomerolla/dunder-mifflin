@@ -73,7 +73,11 @@ export const triagePrompt = (handbook: string, card: Card): string =>
     "true and useful?), and cadence targets. Kill vague ideas.",
     "Card bodies can be stale: when external state decides your verdict",
     "(is a PR merged? is a page live?), verify it with WebFetch instead of",
-    "trusting the card's description of it."
+    "trusting the card's description of it.",
+    "A 'Blocked-by: <card id>' line is NOT a reason to park: blocked cards",
+    "are designed to wait in Ready — the daemon refuses to start them",
+    "until the blocker card is Done, automatically. Judge the card on its",
+    "own merits and brief it as if the blocker were already delivered."
   ].join("\n")
 
 // --- Jim: QA over a finished draft ---
