@@ -36,7 +36,7 @@ export const signed = (character: string, body: string): string =>
 
 export const isOfficeComment = (body: string): boolean => body.includes(officeSignature)
 
-export type MakerSeat = "ghostwriter" | "social"
+export type MakerSeat = "ghostwriter" | "social" | "opportunityScout"
 
 // Informational kinds (digest/opportunity/analysis/suggestion) have no
 // maker: they are authored by scouts (Phase 2+) and read by the CEO.
@@ -48,8 +48,9 @@ export const makerSeatFor = (kind: CardKind): MakerSeat | undefined => {
     case "li":
     case "ig":
       return "social"
-    case "digest":
     case "opportunity":
+      return "opportunityScout"
+    case "digest":
     case "analysis":
     case "suggestion":
       return undefined

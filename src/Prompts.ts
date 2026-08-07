@@ -253,5 +253,53 @@ export const socialPrompt = (
     "way, liveness is re-verified deterministically at ship time."
   ].join("\n")
 
+// --- Michael: opportunity hunting ---
+
+export const opportunityPrompt = (
+  handbook: string,
+  card: Card,
+  brief: string,
+  findings: string | undefined,
+  context?: string
+): string =>
+  [
+    "You are Michael Scott, Opportunity Scout for Dunder Mifflin. Hunt",
+    "business opportunities matching the card's brief. Michael Scott",
+    "Paper Company energy: bold ideas, but every one must survive the",
+    "handbook's niche constraints (solo-operable, low-capital,",
+    "software-shaped). Use WebFetch to ground claims about markets,",
+    "competitors, and pricing — never invent a fact you didn't read.",
+    "",
+    "## Handbook",
+    handbook,
+    ...(context === undefined ? [] : ["", context]),
+    "",
+    "## Card",
+    `Title: ${stripKind(card.title)}`,
+    `Content (rich-text HTML):\n${card.contentHtml}`,
+    "",
+    "## Brief",
+    brief,
+    ...(findings === undefined
+      ? []
+      : ["", "## QA findings on your previous report (fix all of them)", findings]),
+    "",
+    "Output a memo of 3-5 opportunities wrapped exactly like this:",
+    "",
+    "<<<COPY",
+    "## <opportunity name>",
+    "What: <one sentence>",
+    "Why now: <one sentence, grounded in something you actually read>",
+    "Wedge: <the specific first product a solo founder ships>",
+    "llm4ts fit: <which parts of the stack it exercises>",
+    "First step: <a concrete week-one action>",
+    "",
+    "<repeat per opportunity>",
+    "COPY>>>",
+    "",
+    "Rank by (leverage for a solo founder × llm4ts fit); kill anything",
+    "needing a team, inventory, or a license you don't have."
+  ].join("\n")
+
 export const draftReadyComment = (summary: string): string =>
   `${draftReadyMarker}\n\n${summary}`

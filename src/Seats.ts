@@ -36,6 +36,7 @@ import {
   parseQa,
   parseTriage,
   qaPrompt,
+  opportunityPrompt,
   socialPrompt,
   triagePrompt
 } from "./Prompts.ts"
@@ -315,8 +316,10 @@ export const runMaker = (
     const attempts = draftAttemptsSinceBrief(comments)
     const workLog = yield* ensureWorkLog(deps, card.id)
     if (attempts >= deps.config.maxDraftAttempts) {
+      const character =
+        seat === "ghostwriter" ? "Pam" : seat === "opportunityScout" ? "Michael" : "Kelly"
       yield* deps.board.commentAs(
-        seat === "ghostwriter" ? "Pam" : "Kelly",
+        character,
         card.id,
         `Stuck after ${attempts} drafts — parking for the CEO. See the QA findings above.`
       )
@@ -333,6 +336,8 @@ export const runMaker = (
     const findings = yield* findingsFor(deps, card.id)
     if (seat === "ghostwriter") {
       yield* runGhostwriter(deps, card, handbook, brief, findings, workLog, attempts + 1)
+    } else if (seat === "opportunityScout") {
+      yield* runScout(deps, card, handbook, brief, findings, workLog, attempts + 1)
     } else {
       yield* runSocial(deps, card, handbook, brief, findings, workLog, attempts + 1)
     }
@@ -479,6 +484,46 @@ const runSocial = (
     yield* deps.board.commentAs("Kelly", card.id, draftReadyComment(copy))
     yield* freezeWorkLog(deps, workLog, `${runLabel} · draft ready`)
     yield* record(deps, "social", card, "Advanced", costUsd)
+  })
+
+const runScout = (
+  deps: SeatDeps,
+  card: Card,
+  handbook: string,
+  brief: string,
+  findings: string | undefined,
+  workLog: WorkLogRef | undefined,
+  attempt: number
+): Effect.Effect<void, FlowError> =>
+  Effect.gen(function* () {
+    const startMs = yield* Clock.currentTimeMillis
+    const context = yield* memoryContext(deps, "drafting", "opportunity")
+    const { reply, costUsd } = yield* askSeat(
+      deps,
+      "opportunityScout",
+      "opportunity-scout",
+      handbook,
+      opportunityPrompt(handbook, card, brief, findings, context),
+      workLog === undefined
+        ? undefined
+        : liveTrace(deps, workLog, `🔭 Michael hunting opportunities (attempt ${attempt})`)
+    )
+    const doneMs = yield* Clock.currentTimeMillis
+    const runLabel = `🔭 Michael memo #${attempt} · ${durationLabel(doneMs - startMs)} · $${costUsd.toFixed(2)}`
+    const memo = reply === undefined ? undefined : parseCopy(reply)
+    if (memo === undefined) {
+      yield* deps.board.commentAs(
+        "Michael",
+        card.id,
+        `DRAFT-FAILED\n\nNo parseable memo in the reply. Reply head:\n${(reply ?? "(no reply)").slice(0, 400)}`
+      )
+      yield* freezeWorkLog(deps, workLog, `${runLabel} · no parseable memo`)
+      yield* record(deps, "opportunityScout", card, "Failed", costUsd)
+      return
+    }
+    yield* deps.board.commentAs("Michael", card.id, draftReadyComment(memo))
+    yield* freezeWorkLog(deps, workLog, `${runLabel} · memo ready`)
+    yield* record(deps, "opportunityScout", card, "Advanced", costUsd)
   })
 
 // --- Jim: fresh-context QA over a finished draft ---
