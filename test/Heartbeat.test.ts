@@ -22,7 +22,7 @@ describe("heartbeat decisions (pure)", () => {
     assert.strictEqual(triages.length, 3)
   })
 
-  it("claims one Ready card per maker seat, only for maker kinds", () => {
+  it("claims one Ready card per maker seat; every prefixed kind has a seat", () => {
     const actions = decide(
       {
         ...empty,
@@ -30,7 +30,8 @@ describe("heartbeat decisions (pure)", () => {
           card(10, "[blog] First"),
           card(11, "[blog] Second"),
           card(12, "[x] Tweet"),
-          card(13, "[digest] Info only")
+          card(13, "[digest] Ryan's now"),
+          card(14, "[analysis] Oscar's now")
         ]
       },
       { triagePerBeat: 3 }
@@ -40,7 +41,9 @@ describe("heartbeat decisions (pure)", () => {
       claims.map((claim) => (claim.kind === "claim" ? [claim.seat, claim.card.id] : [])),
       [
         ["ghostwriter", 10],
-        ["social", 12]
+        ["social", 12],
+        ["trendScout", 13],
+        ["analyst", 14]
       ]
     )
   })

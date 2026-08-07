@@ -36,8 +36,11 @@ import {
   parseQa,
   parseTriage,
   qaPrompt,
+  analysisPrompt,
+  digestPrompt,
   opportunityPrompt,
   socialPrompt,
+  suggestionPrompt,
   triagePrompt
 } from "./Prompts.ts"
 import { draftReadyMarker, parseKind, stripKind, type MakerSeat } from "./Protocol.ts"
@@ -316,8 +319,7 @@ export const runMaker = (
     const attempts = draftAttemptsSinceBrief(comments)
     const workLog = yield* ensureWorkLog(deps, card.id)
     if (attempts >= deps.config.maxDraftAttempts) {
-      const character =
-        seat === "ghostwriter" ? "Pam" : seat === "opportunityScout" ? "Michael" : "Kelly"
+      const character = memoSpecs[seat]?.character ?? (seat === "ghostwriter" ? "Pam" : "Kelly")
       yield* deps.board.commentAs(
         character,
         card.id,
@@ -334,10 +336,11 @@ export const runMaker = (
     const handbook = yield* readHandbook(process.cwd())
     const brief = yield* briefFor(deps, card.id)
     const findings = yield* findingsFor(deps, card.id)
+    const memoSpec = memoSpecs[seat]
     if (seat === "ghostwriter") {
       yield* runGhostwriter(deps, card, handbook, brief, findings, workLog, attempts + 1)
-    } else if (seat === "opportunityScout") {
-      yield* runScout(deps, card, handbook, brief, findings, workLog, attempts + 1)
+    } else if (memoSpec !== undefined) {
+      yield* runMemo(deps, memoSpec, card, handbook, brief, findings, workLog, attempts + 1)
     } else {
       yield* runSocial(deps, card, handbook, brief, findings, workLog, attempts + 1)
     }
@@ -486,8 +489,67 @@ const runSocial = (
     yield* record(deps, "social", card, "Advanced", costUsd)
   })
 
-const runScout = (
+// The memo seats: one runner, four Office characters. Each produces a
+// researched memo in COPY markers, lands it as DRAFT-READY, and goes
+// through the same QA gate and work log as every other maker.
+interface MemoSpec {
+  readonly seatKey: string
+  readonly agent: string
+  readonly character: string
+  readonly icon: string
+  readonly doing: string
+  readonly kind: string
+  readonly prompt: (
+    handbook: string,
+    card: Card,
+    brief: string,
+    findings: string | undefined,
+    context?: string
+  ) => string
+}
+
+const memoSpecs: Partial<Record<MakerSeat, MemoSpec>> = {
+  opportunityScout: {
+    seatKey: "opportunityScout",
+    agent: "opportunity-scout",
+    character: "Michael",
+    icon: "🔭",
+    doing: "hunting opportunities",
+    kind: "opportunity",
+    prompt: opportunityPrompt
+  },
+  trendScout: {
+    seatKey: "trendScout",
+    agent: "trend-scout",
+    character: "Ryan",
+    icon: "📡",
+    doing: "scouting trends",
+    kind: "digest",
+    prompt: digestPrompt
+  },
+  analyst: {
+    seatKey: "analyst",
+    agent: "analyst",
+    character: "Oscar",
+    icon: "📊",
+    doing: "crunching the numbers",
+    kind: "analysis",
+    prompt: analysisPrompt
+  },
+  growthAdvisor: {
+    seatKey: "growthAdvisor",
+    agent: "growth-advisor",
+    character: "Andy",
+    icon: "📣",
+    doing: "auditing the presence",
+    kind: "suggestion",
+    prompt: suggestionPrompt
+  }
+}
+
+const runMemo = (
   deps: SeatDeps,
+  spec: MemoSpec,
   card: Card,
   handbook: string,
   brief: string,
@@ -497,33 +559,33 @@ const runScout = (
 ): Effect.Effect<void, FlowError> =>
   Effect.gen(function* () {
     const startMs = yield* Clock.currentTimeMillis
-    const context = yield* memoryContext(deps, "drafting", "opportunity")
+    const context = yield* memoryContext(deps, "drafting", spec.kind)
     const { reply, costUsd } = yield* askSeat(
       deps,
-      "opportunityScout",
-      "opportunity-scout",
+      spec.seatKey,
+      spec.agent,
       handbook,
-      opportunityPrompt(handbook, card, brief, findings, context),
+      spec.prompt(handbook, card, brief, findings, context),
       workLog === undefined
         ? undefined
-        : liveTrace(deps, workLog, `🔭 Michael hunting opportunities (attempt ${attempt})`)
+        : liveTrace(deps, workLog, `${spec.icon} ${spec.character} ${spec.doing} (attempt ${attempt})`)
     )
     const doneMs = yield* Clock.currentTimeMillis
-    const runLabel = `🔭 Michael memo #${attempt} · ${durationLabel(doneMs - startMs)} · $${costUsd.toFixed(2)}`
+    const runLabel = `${spec.icon} ${spec.character} memo #${attempt} · ${durationLabel(doneMs - startMs)} · $${costUsd.toFixed(2)}`
     const memo = reply === undefined ? undefined : parseCopy(reply)
     if (memo === undefined) {
       yield* deps.board.commentAs(
-        "Michael",
+        spec.character,
         card.id,
         `DRAFT-FAILED\n\nNo parseable memo in the reply. Reply head:\n${(reply ?? "(no reply)").slice(0, 400)}`
       )
       yield* freezeWorkLog(deps, workLog, `${runLabel} · no parseable memo`)
-      yield* record(deps, "opportunityScout", card, "Failed", costUsd)
+      yield* record(deps, spec.seatKey, card, "Failed", costUsd)
       return
     }
-    yield* deps.board.commentAs("Michael", card.id, draftReadyComment(memo))
+    yield* deps.board.commentAs(spec.character, card.id, draftReadyComment(memo))
     yield* freezeWorkLog(deps, workLog, `${runLabel} · memo ready`)
-    yield* record(deps, "opportunityScout", card, "Advanced", costUsd)
+    yield* record(deps, spec.seatKey, card, "Advanced", costUsd)
   })
 
 // --- Jim: fresh-context QA over a finished draft ---

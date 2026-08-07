@@ -301,5 +301,134 @@ export const opportunityPrompt = (
     "needing a team, inventory, or a license you don't have."
   ].join("\n")
 
+// --- Ryan: topic digests ---
+
+export const digestPrompt = (
+  handbook: string,
+  card: Card,
+  brief: string,
+  findings: string | undefined,
+  context?: string
+): string =>
+  memoPrompt({
+    persona:
+      "You are Ryan Howard, Trend Scout for Dunder Mifflin. Distill what " +
+      "actually mattered lately in the topics the card names (default: the " +
+      "handbook's topics of interest). Use WebFetch to read primary " +
+      "sources — release notes, announcements, repos, posts — never report " +
+      "something you didn't open.",
+    handbook,
+    card,
+    brief,
+    findings,
+    context,
+    format: [
+      "## <development worth knowing>",
+      "What happened: <one sentence, with the source URL you read>",
+      "Why it matters to us: <one sentence tied to the handbook>",
+      "Content angle: <a card the office could run, or 'none'>",
+      "",
+      "<repeat per item, 3-6 items, newest first>"
+    ]
+  })
+
+// --- Oscar: analysis reports ---
+
+export const analysisPrompt = (
+  handbook: string,
+  card: Card,
+  brief: string,
+  findings: string | undefined,
+  context?: string
+): string =>
+  memoPrompt({
+    persona:
+      "You are Oscar Martinez, Analyst for Dunder Mifflin. Report the " +
+      "office's numbers honestly. Your sources: the ledger file at " +
+      ".state/ledger.jsonl in the working directory (read it — one JSON " +
+      "line per seat run: seat, card, outcome, costUsd), and any platform " +
+      "numbers the CEO pasted into the card body. Never invent a metric.",
+    handbook,
+    card,
+    brief,
+    findings,
+    context,
+    format: [
+      "## Output",
+      "Shipped: <pieces by channel, from ledger publisher entries>",
+      "## Spend",
+      "Total and per-card cost, biggest line items, cost per shipped piece",
+      "## Quality",
+      "QA pass/bounce/park rates by seat",
+      "## Reading",
+      "2-3 sentences: what the numbers say the office should do differently"
+    ]
+  })
+
+// --- Andy: growth suggestions ---
+
+export const suggestionPrompt = (
+  handbook: string,
+  card: Card,
+  brief: string,
+  findings: string | undefined,
+  context?: string
+): string =>
+  memoPrompt({
+    persona:
+      "You are Andy Bernard, Growth Advisor for Dunder Mifflin. Audit the " +
+      "CEO's digital presence per the card's brief — WebFetch the actual " +
+      "pages (blog, profiles named in the handbook) and judge what a " +
+      "first-time visitor sees. Cornell-grade personal branding, zero hype.",
+    handbook,
+    card,
+    brief,
+    findings,
+    context,
+    format: [
+      "## <suggestion>",
+      "Observed: <what you actually saw, with the URL>",
+      "Change: <the specific edit or addition>",
+      "Effort/impact: <low/med/high each>",
+      "",
+      "<repeat per suggestion, ranked by impact/effort, max 5>"
+    ]
+  })
+
+interface MemoPromptSpec {
+  readonly persona: string
+  readonly handbook: string
+  readonly card: Card
+  readonly brief: string
+  readonly findings: string | undefined
+  readonly context: string | undefined
+  readonly format: ReadonlyArray<string>
+}
+
+const memoPrompt = (spec: MemoPromptSpec): string =>
+  [
+    spec.persona,
+    "",
+    "## Handbook",
+    spec.handbook,
+    ...(spec.context === undefined ? [] : ["", spec.context]),
+    "",
+    "## Card",
+    `Title: ${stripKind(spec.card.title)}`,
+    `Content (rich-text HTML):\n${spec.card.contentHtml}`,
+    "",
+    "## Brief",
+    spec.brief,
+    ...(spec.findings === undefined
+      ? []
+      : ["", "## QA findings on your previous memo (fix all of them)", spec.findings]),
+    "",
+    "Output the memo wrapped exactly like this:",
+    "",
+    "<<<COPY",
+    ...spec.format,
+    "COPY>>>"
+  ].join("\n")
+
 export const draftReadyComment = (summary: string): string =>
   `${draftReadyMarker}\n\n${summary}`

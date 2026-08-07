@@ -37,9 +37,11 @@ describe("card protocol", () => {
     assert.strictEqual(makerSeatFor("x"), "social")
     assert.strictEqual(makerSeatFor("li"), "social")
     assert.strictEqual(makerSeatFor("ig"), "social")
-    // Michael hunts opportunities: [opportunity] cards are maker-able.
+    // Every informational kind has its Office character: Michael hunts,
+    // Ryan scouts, Oscar counts, Andy audits.
     assert.strictEqual(makerSeatFor("opportunity"), "opportunityScout")
-    assert.isUndefined(makerSeatFor("digest"))
-    assert.isUndefined(makerSeatFor("analysis"))
+    assert.strictEqual(makerSeatFor("digest"), "trendScout")
+    assert.strictEqual(makerSeatFor("analysis"), "analyst")
+    assert.strictEqual(makerSeatFor("suggestion"), "growthAdvisor")
   })
 })
