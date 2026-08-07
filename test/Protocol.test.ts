@@ -13,6 +13,8 @@ describe("card protocol", () => {
     assert.strictEqual(parseKind("[blog] Effect-TS retries deep dive"), "blog")
     assert.strictEqual(parseKind("[x] Hot take on typed errors"), "x")
     assert.strictEqual(parseKind("[opportunity] ZIO starter kits"), "opportunity")
+    assert.strictEqual(parseKind("[product] Invoice chaser PRD"), "product")
+    assert.strictEqual(parseKind("[design] Invoice chaser UX"), "design")
     assert.isUndefined(parseKind("No prefix here"))
     assert.isUndefined(parseKind("[unknown] prefix"))
     assert.isUndefined(parseKind("[blog]no space"))
@@ -43,5 +45,9 @@ describe("card protocol", () => {
     assert.strictEqual(makerSeatFor("digest"), "trendScout")
     assert.strictEqual(makerSeatFor("analysis"), "analyst")
     assert.strictEqual(makerSeatFor("suggestion"), "growthAdvisor")
+    // The product office: Jan owns the PRD, Nellie the design concept —
+    // the bridge from Michael's ideas toward a Nightcall build.
+    assert.strictEqual(makerSeatFor("product"), "productOwner")
+    assert.strictEqual(makerSeatFor("design"), "productDesigner")
   })
 })

@@ -125,3 +125,30 @@ filtering over `listMessages` (no search dependency). llm4ts 0.9.1
 shipped the ops (`listMessages`, `createMessage --no-subscribe`,
 `listTodolists`, `listTodos`); llm4ts MemoryStore (ADR 0007) is
 deliberately not used — agency memory belongs on the control plane.
+
+## Amendment 2026-08-06 (evening): the product office and the Nightcall bridge
+
+Two seats extend the pipeline from ideas toward built software. **Jan
+Levinson (Product Owner, `[product]`)** turns a chosen `[opportunity]`
+idea into a PRD memo — problem, buyer, MVP scoped to what an autonomous
+factory ships in ~two weeks, non-goals, one success metric, risks, and a
+"Nightcall readiness" list (repo name, stack, external accounts — the
+decisions a factory can't make). **Nellie Bertram (Product Designer,
+`[design]`)** takes an approved PRD to a design concept: core loop,
+surfaces, first-run, and the deliberate v1 cut. Both are memo seats on
+the standard pipeline (brief → memo → QA → Review).
+
+The flow: `[opportunity]` (Michael) → CEO picks one idea, files
+`[product]` citing it → Jan → Review/Approve → `[design]` citing the
+PRD → Nellie → Review/Approve.
+
+**The bridge (designed, not yet built):** a `[handoff]` step where
+Dwight — deterministically, via GitHubTool — creates the product's
+repository, seeds it with the PRD and design memo as committed docs, and
+opens the epic issues derived from the MVP scope. Nightcall picks the
+repo up through `NIGHTCALL_TARGETS` and builds. Prerequisites before
+implementing: CEO approval semantics for repo creation (a new public
+artifact), epic-decomposition format matching Nightcall's Tech Lead
+expectations (`factory:*` labels, self-contained child issues), and a
+budget envelope per product. The handoff stays deterministic: judgment
+ends at Approved; shipping a factory work order is a forklift job.

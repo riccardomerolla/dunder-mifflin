@@ -50,6 +50,16 @@
       "connector": "claude-cli",
       "model": "claude-sonnet-5",
       "cadence": "weekly"
+    },
+    "productOwner": {
+      "character": "Jan Levinson",
+      "connector": "claude-cli",
+      "model": "claude-opus-5"
+    },
+    "productDesigner": {
+      "character": "Nellie Bertram",
+      "connector": "claude-cli",
+      "model": "claude-sonnet-5"
     }
   },
   "guardrails": {

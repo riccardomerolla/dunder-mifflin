@@ -37,8 +37,10 @@ import {
   parseTriage,
   qaPrompt,
   analysisPrompt,
+  designPrompt,
   digestPrompt,
   opportunityPrompt,
+  productPrompt,
   socialPrompt,
   suggestionPrompt,
   triagePrompt
@@ -535,6 +537,24 @@ const memoSpecs: Partial<Record<MakerSeat, MemoSpec>> = {
     doing: "crunching the numbers",
     kind: "analysis",
     prompt: analysisPrompt
+  },
+  productOwner: {
+    seatKey: "productOwner",
+    agent: "product-owner",
+    character: "Jan",
+    icon: "📐",
+    doing: "writing the PRD",
+    kind: "product",
+    prompt: productPrompt
+  },
+  productDesigner: {
+    seatKey: "productDesigner",
+    agent: "product-designer",
+    character: "Nellie",
+    icon: "🎨",
+    doing: "designing the concept",
+    kind: "design",
+    prompt: designPrompt
   },
   growthAdvisor: {
     seatKey: "growthAdvisor",

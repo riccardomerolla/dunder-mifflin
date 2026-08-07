@@ -12,7 +12,9 @@ export const CardKind = Schema.Literals([
   "digest",
   "opportunity",
   "analysis",
-  "suggestion"
+  "suggestion",
+  "product",
+  "design"
 ])
 export type CardKind = typeof CardKind.Type
 
@@ -43,6 +45,8 @@ export type MakerSeat =
   | "trendScout"
   | "analyst"
   | "growthAdvisor"
+  | "productOwner"
+  | "productDesigner"
 
 // Informational kinds (digest/opportunity/analysis/suggestion) have no
 // maker: they are authored by scouts (Phase 2+) and read by the CEO.
@@ -62,6 +66,10 @@ export const makerSeatFor = (kind: CardKind): MakerSeat | undefined => {
       return "analyst"
     case "suggestion":
       return "growthAdvisor"
+    case "product":
+      return "productOwner"
+    case "design":
+      return "productDesigner"
   }
 }
 
