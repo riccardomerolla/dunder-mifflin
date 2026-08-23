@@ -67,6 +67,16 @@ describe("agency config", () => {
   it.effect("builds Cli vs Api connector configs by connector family", () =>
     Effect.gen(function* () {
       const config = yield* configFrom({}, seatsJson)
+      // Flags are per-connector: claude-cli gets its harness flags; any
+      // other CLI gets none (opencode rejected --max-turns with a usage
+      // dump on the first local-model deployment).
+      const opencodeConfig = yield* configFrom({ DM_SEAT_SOCIAL_CONNECTOR: "opencode" }, seatsJson)
+      const social = opencodeConfig.connectorConfigFor("social")
+      assert.isTrue(social?._tag === "CliConnectorConfig" && social.flags["max-turns"] === undefined)
+      assert.isTrue(
+        social?._tag === "CliConnectorConfig" && social.flags["allowed-tools"] === undefined
+      )
+      assert.isTrue(social?._tag === "CliConnectorConfig" && social.readOnly)
       const editor = config.connectorConfigFor("editor")
       const ghostwriter = config.connectorConfigFor("ghostwriter")
 
