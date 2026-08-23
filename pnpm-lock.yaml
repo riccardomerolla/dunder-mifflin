@@ -9,14 +9,14 @@ importers:
   .:
     dependencies:
       '@llm4ts/core':
-        specifier: 0.10.0
-        version: 0.10.0(effect@4.0.0-beta.103)
+        specifier: 0.10.1
+        version: 0.10.1(effect@4.0.0-beta.103)
       '@llm4ts/flow':
-        specifier: 0.10.0
-        version: 0.10.0(effect@4.0.0-beta.103)
+        specifier: 0.10.1
+        version: 0.10.1(effect@4.0.0-beta.103)
       '@llm4ts/runner':
-        specifier: 0.10.0
-        version: 0.10.0(effect@4.0.0-beta.103)
+        specifier: 0.10.1
+        version: 0.10.1(effect@4.0.0-beta.103)
       effect:
         specifier: ^4.0.0-beta.102
         version: 4.0.0-beta.103
@@ -45,20 +45,20 @@ packages:
   '@jridgewell/sourcemap-codec@1.5.5':
     resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
 
-  '@llm4ts/core@0.10.0':
-    resolution: {integrity: sha512-hkDUtprsqwiznAPEUpgLS4A6QCviX6WKEKwunKlQlkG+E6uSAbgoq6kJI1rlF8bsRRkev1UGLY70qqADPhQpOA==}
+  '@llm4ts/core@0.10.1':
+    resolution: {integrity: sha512-mxYJ/Cexg98bLwZ42tTapeBku1LSYPOtdWWvbLdzeax5BtWjNQ0wa57MGAKgtbVUBZbXXupMzubnOf05H7Io5A==}
     engines: {node: '>=22'}
     peerDependencies:
       effect: 4.0.0-beta.102
 
-  '@llm4ts/flow@0.10.0':
-    resolution: {integrity: sha512-U70UuOk+xuD+rRRfeSaXPQ1/pIT7nbiSWxxTyQ2A2oywty3XoY1W10lloNWX0Vjp5nzXe4hNhYWADfsemni2HA==}
+  '@llm4ts/flow@0.10.1':
+    resolution: {integrity: sha512-xpY4fAP0XEPX1/g3kxRPwTUBq7ixJu8BHrUojXciMfSeZiKvOzO04OplKONOAVP9Zyq59ji260vwYAq7fzEx3A==}
     engines: {node: '>=22'}
     peerDependencies:
       effect: 4.0.0-beta.102
 
-  '@llm4ts/runner@0.10.0':
-    resolution: {integrity: sha512-8A7rJNO9CgDxjlsdi2T/zb6gvt9Ai/Qj3I4F08WB5+KELWk+A0qamq4enbYTGTn17cwa0eBT55O4MEoXowsecg==}
+  '@llm4ts/runner@0.10.1':
+    resolution: {integrity: sha512-p7x6Fp0MlwQ1ta6CUKZoHvwf3mvr3Hjmu1Q+pn5cqxNVcTsVthm9M+/nn+aEPWUxK77pWBOLO5XD+JmTaI9K5Q==}
     engines: {node: '>=22'}
     peerDependencies:
       effect: 4.0.0-beta.102
@@ -558,19 +558,19 @@ snapshots:
 
   '@jridgewell/sourcemap-codec@1.5.5': {}
 
-  '@llm4ts/core@0.10.0(effect@4.0.0-beta.103)':
+  '@llm4ts/core@0.10.1(effect@4.0.0-beta.103)':
     dependencies:
       effect: 4.0.0-beta.103
 
-  '@llm4ts/flow@0.10.0(effect@4.0.0-beta.103)':
+  '@llm4ts/flow@0.10.1(effect@4.0.0-beta.103)':
     dependencies:
-      '@llm4ts/core': 0.10.0(effect@4.0.0-beta.103)
+      '@llm4ts/core': 0.10.1(effect@4.0.0-beta.103)
       effect: 4.0.0-beta.103
 
-  '@llm4ts/runner@0.10.0(effect@4.0.0-beta.103)':
+  '@llm4ts/runner@0.10.1(effect@4.0.0-beta.103)':
     dependencies:
-      '@llm4ts/core': 0.10.0(effect@4.0.0-beta.103)
-      '@llm4ts/flow': 0.10.0(effect@4.0.0-beta.103)
+      '@llm4ts/core': 0.10.1(effect@4.0.0-beta.103)
+      '@llm4ts/flow': 0.10.1(effect@4.0.0-beta.103)
       effect: 4.0.0-beta.103
 
   '@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.4':
