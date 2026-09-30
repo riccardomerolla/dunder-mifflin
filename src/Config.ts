@@ -11,7 +11,7 @@ import { ConnectorId, cliConnectorIds, connectorIds } from "@llm4ts/core/Models"
 // Agency configuration: seats.json decoded once at startup, env carrying
 // only secrets and machine-local overrides (DM_SEAT_<KEY>_CONNECTOR/_MODEL).
 
-export class ConfigError extends Schema.TaggedErrorClass<ConfigError>("dm/ConfigError")(
+export class ConfigError extends Schema.TaggedError<ConfigError>("dm/ConfigError")(
   "ConfigError",
   { message: Schema.String }
 ) {}
