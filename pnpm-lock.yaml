@@ -9,21 +9,21 @@ importers:
   .:
     dependencies:
       '@llm4ts/core':
-        specifier: 4.0.0
-        version: 4.0.0(effect@4.0.0)
+        specifier: 4.11.0
+        version: 4.11.0(effect@4.1.4)
       '@llm4ts/flow':
-        specifier: 4.0.0
-        version: 4.0.0(effect@4.0.0)
+        specifier: 4.11.0
+        version: 4.11.0(effect@4.1.4)
       '@llm4ts/runner':
-        specifier: 4.0.0
-        version: 4.0.0(effect@4.0.0)
+        specifier: 4.11.0
+        version: 4.11.0(effect@4.1.4)
       effect:
-        specifier: 4.0.0
-        version: 4.0.0
+        specifier: 4.1.4
+        version: 4.1.4
     devDependencies:
       '@effect/vitest':
-        specifier: 4.0.0
-        version: 4.0.0(effect@4.0.0)(vitest@5.1.0(@types/node@22.20.1)(vite@8.2.0(@types/node@22.20.1)(yaml@2.9.0)))
+        specifier: 4.1.4
+        version: 4.1.4(effect@4.1.4)(vitest@5.1.0(@types/node@22.20.1)(vite@8.2.0(@types/node@22.20.1)(yaml@2.9.0)))
       '@types/node':
         specifier: ^22.20.1
         version: 22.20.1
@@ -36,10 +36,10 @@ importers:
 
 packages:
 
-  '@effect/vitest@4.0.0':
-    resolution: {integrity: sha512-kGElCPFGtP+CgMCwV/HjJWqtE3zYo6I1+8MSA54l+EI24lPU9p2Efa+TBp1jfkg9j711KKzEqgSAy3VzTsb76Q==}
+  '@effect/vitest@4.1.4':
+    resolution: {integrity: sha512-AKpZ6zKihCRhY7hDbiQ2yp/krw+afIkxDRjFMwwzMiyhd0iYk0WaHa9J6GGC7TUF/C7HP2dZyMVq5xC0Qm/2/g==}
     peerDependencies:
-      effect: ^4.0.0
+      effect: ^4.1.4
       vitest: '>=5.0.0 <6.0.0'
 
   '@jridgewell/resolve-uri@3.1.3':
@@ -52,23 +52,23 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@llm4ts/core@4.0.0':
-    resolution: {integrity: sha512-8NteXySA86GM8eKBtKXkCOPwYqv1tqrItUloy3YBkMIunXXbixkkmeI6+Vk4PKqH2cZQ4iYKJLjlyADqGICn8A==}
+  '@llm4ts/core@4.11.0':
+    resolution: {integrity: sha512-RknoWVSUtKcWskixIKIih1+pE0PRSh++AmmEZh9QVaJv9IeAvNOCmv2GOGZJIh7tXdmy7pC1tKjKifjbW6umLw==}
     engines: {node: '>=22'}
     peerDependencies:
-      effect: 4.0.0
+      effect: 4.1.4
 
-  '@llm4ts/flow@4.0.0':
-    resolution: {integrity: sha512-XqUCjdkEGRr6zeYbJyddU0fM1l+ra4gdfMI3bIVCpI7AK40CffBn/1dutHhjE2YRh2Z/Oy+jrr/SYJlY0wCXPg==}
+  '@llm4ts/flow@4.11.0':
+    resolution: {integrity: sha512-izXk9fDqyhjggRpzo8wz74VCz1oXpe6MtKxOWZNiCyGxtTv8HLp8omzT6tB7v29kP2PJRZqhXBoGOLHKd7JRgQ==}
     engines: {node: '>=22'}
     peerDependencies:
-      effect: 4.0.0
+      effect: 4.1.4
 
-  '@llm4ts/runner@4.0.0':
-    resolution: {integrity: sha512-28YGJLKEmMf0oBNTpuEfeKidWkmiZuPjVJpwRZYnMJXMN35yxqsZ05Csis3Yw9UwoxPAiJIHjtcjabRiuCvR2w==}
+  '@llm4ts/runner@4.11.0':
+    resolution: {integrity: sha512-eILtIWRMd1bXfD0ua0BWJMJw7ALWUbfn1GhkFbHcUNocd0ObX5Wv4ATnSbBGQrncC8Ld+4y9zHZGlFwIstU+dw==}
     engines: {node: '>=22'}
     peerDependencies:
-      effect: 4.0.0
+      effect: 4.1.4
 
   '@oxc-project/types@0.143.0':
     resolution: {integrity: sha512-u6JZdLBTLotrNC9Vd6vPssINdzcCzleKAH6EJKImQb7GtYvX5keN2dxkoK44stCc4tffE6QQRtZTXVSzsLUlWA==}
@@ -204,8 +204,8 @@ packages:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
     engines: {node: '>=8'}
 
-  effect@4.0.0:
-    resolution: {integrity: sha512-ooc1TG5t+FfzgYnFz2ff6BBKyZ7EwBRVXC7c4RhQUAD6/TZ2gTXXMeb4WX7a19ozQo4J73/QW+S00YAIresoMQ==}
+  effect@4.1.4:
+    resolution: {integrity: sha512-Tgrv/9FN+TZYyOn8XSli+fVqAfwDrDAkiX5Uu9vztINb675VTQdhD0gWI5Kzvhlh9QqzjZvw72iugqw5pwoghQ==}
 
   es-module-lexer@2.3.2:
     resolution: {integrity: sha512-poHGpORABojJJucnV9KbOavETW8lBVnphkW77ER5/BQ5Fz7oXSoCNek7IH3vR5nRjdsEz926ibFYX8KtLQmdyw==}
@@ -456,9 +456,9 @@ packages:
 
 snapshots:
 
-  '@effect/vitest@4.0.0(effect@4.0.0)(vitest@5.1.0(@types/node@22.20.1)(vite@8.2.0(@types/node@22.20.1)(yaml@2.9.0)))':
+  '@effect/vitest@4.1.4(effect@4.1.4)(vitest@5.1.0(@types/node@22.20.1)(vite@8.2.0(@types/node@22.20.1)(yaml@2.9.0)))':
     dependencies:
-      effect: 4.0.0
+      effect: 4.1.4
       vitest: 5.1.0(@types/node@22.20.1)(vite@8.2.0(@types/node@22.20.1)(yaml@2.9.0))
 
   '@jridgewell/resolve-uri@3.1.3': {}
@@ -470,20 +470,20 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.3
       '@jridgewell/sourcemap-codec': 1.6.0
 
-  '@llm4ts/core@4.0.0(effect@4.0.0)':
+  '@llm4ts/core@4.11.0(effect@4.1.4)':
     dependencies:
-      effect: 4.0.0
+      effect: 4.1.4
 
-  '@llm4ts/flow@4.0.0(effect@4.0.0)':
+  '@llm4ts/flow@4.11.0(effect@4.1.4)':
     dependencies:
-      '@llm4ts/core': 4.0.0(effect@4.0.0)
-      effect: 4.0.0
+      '@llm4ts/core': 4.11.0(effect@4.1.4)
+      effect: 4.1.4
 
-  '@llm4ts/runner@4.0.0(effect@4.0.0)':
+  '@llm4ts/runner@4.11.0(effect@4.1.4)':
     dependencies:
-      '@llm4ts/core': 4.0.0(effect@4.0.0)
-      '@llm4ts/flow': 4.0.0(effect@4.0.0)
-      effect: 4.0.0
+      '@llm4ts/core': 4.11.0(effect@4.1.4)
+      '@llm4ts/flow': 4.11.0(effect@4.1.4)
+      effect: 4.1.4
 
   '@oxc-project/types@0.143.0': {}
 
@@ -561,7 +561,7 @@ snapshots:
 
   detect-libc@2.1.2: {}
 
-  effect@4.0.0: {}
+  effect@4.1.4: {}
 
   es-module-lexer@2.3.2: {}
 
